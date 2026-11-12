@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title><%= title %> - Quản trị</title>
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+<aside class="sidebar">
+  <a class="brand" href="/admin"><%= settings.site_name %><small>Quản trị</small></a>
+  <nav>
+    <% if (isAdmin) { %>
+    <a href="/admin" class="<%= currentPath === '/' ? 'active' : '' %>">📊 Tổng quan</a>
+    <a href="/admin/products" class="<%= currentPath.startsWith('/products') ? 'active' : '' %>">🖼️ Sản phẩm</a>
+    <a href="/admin/categories" class="<%= currentPath.startsWith('/categories') ? 'active' : '' %>">📁 Danh mục</a>
+    <% } %>
+    <a href="/admin/orders" class="<%= currentPath.startsWith('/orders') ? 'active' : '' %>">🧾 Đơn hàng</a>
+    <% if (isAdmin) { %>
+    <a href="/admin/leads" class="<%= currentPath.startsWith('/leads') ? 'active' : '' %>">🎁 Đăng ký ưu đãi</a>
+    <a href="/admin/pages" class="<%= currentPath.startsWith('/pages') ? 'active' : '' %>">📄 Trang nội dung</a>
+    <a href="/admin/settings" class="<%= currentPath.startsWith('/settings') ? 'active' : '' %>">⚙️ Cài đặt website</a>
+    <a href="/admin/mail" class="<%= currentPath.startsWith('/mail') ? 'active' : '' %>">✉️ Cấu hình email</a>
+    <a href="/admin/code" class="<%= currentPath.startsWith('/code') ? 'active' : '' %>">&lt;/&gt; Mã Header / Footer</a>
+    <a href="/admin/users" class="<%= currentPath.startsWith('/users') ? 'active' : '' %>">👥 Người dùng</a>
+    <% } %>
+    <a href="/admin/account" class="<%= currentPath.startsWith('/account') ? 'active' : '' %>">👤 Tài khoản (<%= user.username %>)</a>
+    <a href="/" target="_blank">↗ Xem website</a>
+    <a href="/admin/logout">⎋ Đăng xuất</a>
+  </nav>
+</aside>
+<div class="main">
+  <header class="topbar"><h1><%= title %></h1></header>
+  <div class="content">
+  <% if (flash) { %><div class="alert alert-<%= flash.type %>"><%= flash.msg %></div><% } %>

@@ -1,0 +1,18 @@
+<%- include('_head') %>
+<form method="post" action="/admin/users<%= u.id ? '/' + u.id : '' %>" class="card narrow">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="row">
+    <label>Tên đăng nhập *<input name="username" value="<%= u.username || '' %>" required autocomplete="off"></label>
+    <label>Họ tên<input name="name" value="<%= u.name || '' %>"></label>
+  </div>
+  <label>Mật khẩu <%= u.id ? '(để trống nếu không đổi)' : '*' %>
+    <input name="password" type="password" minlength="6" autocomplete="new-password" <%= u.id ? '' : 'required' %>>
+  </label>
+  <label>Quyền
+    <select name="role"><% Object.keys(ROLES).forEach(function(k){ %><option value="<%= k %>" <%= u.role === k ? 'selected' : '' %>><%= ROLES[k] %></option><% }) %></select>
+  </label>
+  <label class="check"><input type="checkbox" name="active" <%= u.active ? 'checked' : '' %>> Cho phép đăng nhập</label>
+  <button class="btn">💾 Lưu</button>
+  <a class="btn btn-gray" href="/admin/users">Hủy</a>
+</form>
+<%- include('_foot') %>

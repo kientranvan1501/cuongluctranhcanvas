@@ -1,0 +1,25 @@
+<%- include('_head') %>
+<div class="card">
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>#</th><th>Khách hàng</th><th>SĐT</th><th>Tổng</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead>
+    <tbody>
+      <% orders.forEach(function(o){ %>
+        <tr>
+          <td><a href="/admin/orders/<%= o.id %>">#<%= o.id %></a></td>
+          <td><%= o.customer_name %></td><td><a href="tel:<%= o.phone %>"><%= o.phone %></a></td>
+          <td><%= formatPrice(o.total) %></td>
+          <td><span class="status s-<%= o.status %>"><%= STATUSES[o.status] || o.status %></span></td>
+          <td><%= o.created_at %></td>
+          <td class="actions">
+            <a class="btn btn-sm btn-gray" href="/admin/orders/<%= o.id %>">Chi tiết</a>
+            <% if (isAdmin) { %><form method="post" action="/admin/orders/<%= o.id %>/delete" data-confirm="Xóa đơn #<%= o.id %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form><% } %>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!orders.length) { %><tr><td colspan="7" class="muted">Chưa có đơn hàng.</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<%- include('_foot') %>

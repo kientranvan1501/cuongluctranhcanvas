@@ -1,0 +1,20 @@
+<%- include('_head') %>
+<div class="stats">
+  <a href="/admin/products" class="stat"><span><%= stats.products %></span>Sản phẩm</a>
+  <a href="/admin/categories" class="stat"><span><%= stats.categories %></span>Danh mục</a>
+  <a href="/admin/orders" class="stat"><span><%= stats.orders %></span>Đơn hàng</a>
+  <a href="/admin/orders" class="stat hl"><span><%= stats.newOrders %></span>Đơn mới</a>
+</div>
+<div class="card">
+  <div class="card-head"><h2>Đơn hàng gần đây</h2><a class="btn btn-sm" href="/admin/products/new">+ Thêm sản phẩm</a></div>
+  <table class="table">
+    <thead><tr><th>#</th><th>Khách hàng</th><th>SĐT</th><th>Tổng</th><th>Ngày</th></tr></thead>
+    <tbody>
+      <% recent.forEach(function(o){ %>
+        <tr><td><a href="/admin/orders/<%= o.id %>">#<%= o.id %></a></td><td><%= o.customer_name %></td><td><%= o.phone %></td><td><%= formatPrice(o.total) %></td><td><%= o.created_at %></td></tr>
+      <% }) %>
+      <% if (!recent.length) { %><tr><td colspan="5" class="muted">Chưa có đơn hàng.</td></tr><% } %>
+    </tbody>
+  </table>
+</div>
+<%- include('_foot') %>

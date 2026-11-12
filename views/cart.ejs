@@ -1,0 +1,20 @@
+<%- include('partials/header') %>
+<div class="container page-wrap">
+  <h1 class="page-title">Giỏ hàng</h1>
+  <% if (typeof error !== 'undefined' && error) { %><div class="alert alert-error"><%= error %></div><% } %>
+  <div class="cart-layout">
+    <div id="cartItems"><p class="empty">Đang tải...</p></div>
+    <form class="checkout" method="post" action="/dat-hang" id="checkoutForm">
+      <h3>Thông tin đặt hàng</h3>
+      <input name="customer_name" placeholder="Họ và tên *" required>
+      <input name="phone" placeholder="Số điện thoại *" required pattern="[0-9 .+]{8,15}">
+      <input name="email" type="email" placeholder="Email">
+      <input name="address" placeholder="Địa chỉ giao hàng">
+      <textarea name="note" placeholder="Ghi chú" rows="3"></textarea>
+      <input type="hidden" name="items" id="itemsField">
+      <div class="total">Tổng: <strong id="cartTotal">0đ</strong></div>
+      <button class="btn full">Đặt hàng</button>
+    </form>
+  </div>
+</div>
+<%- include('partials/footer') %>

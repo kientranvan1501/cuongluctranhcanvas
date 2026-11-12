@@ -1,0 +1,10 @@
+<%- include('_head') %>
+<form method="post" class="card narrow">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <label>Tên đăng nhập<input name="username" value="<%= user.username %>" required></label>
+  <label>Mật khẩu hiện tại *<input name="current" type="password" required></label>
+  <label>Mật khẩu mới (để trống nếu không đổi)<input name="password" type="password" minlength="6"></label>
+  <label>Nhập lại mật khẩu mới<input name="confirm" type="password"></label>
+  <button class="btn">Cập nhật</button>
+</form>
+<%- include('_foot') %>

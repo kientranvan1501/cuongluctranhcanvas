@@ -1,0 +1,43 @@
+<%- include('_head') %>
+<div class="card">
+  <div class="card-head">
+    <form class="filters">
+      <input name="q" value="<%= q %>" placeholder="Tìm theo tên hoặc mã...">
+      <select name="cat">
+        <option value="">-- Tất cả danh mục --</option>
+        <% cats.forEach(function(c){ %><option value="<%= c.id %>" <%= cat===c.id?'selected':'' %>><%= '— '.repeat(c.depth) %><%= c.name %></option><% }) %>
+      </select>
+      <button class="btn btn-sm btn-gray">Lọc</button>
+    </form>
+    <a class="btn btn-sm" href="/admin/products/new">+ Thêm sản phẩm</a>
+  </div>
+  <p class="muted"><%= total %> sản phẩm</p>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Ảnh</th><th>Tên / Mã</th><th>Danh mục</th><th>Giá</th><th>Hiển thị</th><th></th></tr></thead>
+    <tbody>
+      <% products.forEach(function(p){ %>
+        <tr>
+          <td><img class="thumb" src="<%= p.thumb %>" alt=""></td>
+          <td><a href="/admin/products/<%= p.id %>/edit"><strong><%= p.name %></strong></a><br><span class="muted"><%= p.code %></span>
+            <% if (p.featured) { %><span class="tag">Nổi bật</span><% } %><% if (p.is_new) { %><span class="tag">Mới</span><% } %></td>
+          <td><%= p.cat_name || '—' %></td>
+          <td><%= p.has_range ? 'Từ ' : '' %><%= formatPrice(p.min_price) %></td>
+          <td><%= p.active ? '✅' : '⛔ Ẩn' %></td>
+          <td class="actions">
+            <a class="btn btn-sm btn-gray" href="/admin/products/<%= p.id %>/edit">Sửa</a>
+            <a class="btn btn-sm btn-gray" href="/san-pham/<%= p.slug %>" target="_blank">Xem</a>
+            <form method="post" action="/admin/products/<%= p.id %>/duplicate"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-gray">Nhân bản</button></form>
+            <form method="post" action="/admin/products/<%= p.id %>/delete" data-confirm="Xóa sản phẩm này?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!products.length) { %><tr><td colspan="6" class="muted">Không có sản phẩm.</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+  <% if (pages > 1) { %>
+    <div class="pagination"><% for (let i = 1; i <= pages; i++) { %><a class="<%= i===page?'active':'' %>" href="?q=<%= encodeURIComponent(q) %>&cat=<%= cat||'' %>&page=<%= i %>"><%= i %></a><% } %></div>
+  <% } %>
+</div>
+<%- include('_foot') %>

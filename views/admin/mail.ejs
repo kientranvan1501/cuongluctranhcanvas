@@ -1,0 +1,37 @@
+<%- include('_head') %>
+<form method="post" class="card narrow">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <h3>Thông báo đơn hàng</h3>
+  <label class="check"><input type="checkbox" name="mail_enabled" <%= settings.mail_enabled === '1' ? 'checked' : '' %>> Gửi email khi có đơn hàng mới</label>
+  <label>Email nhận thông báo
+    <small>Có thể nhập nhiều email, cách nhau bằng dấu phẩy</small>
+    <input name="mail_to" value="<%= settings.mail_to %>" placeholder="banhang@gmail.com, quanly@gmail.com">
+  </label>
+  <label class="check"><input type="checkbox" name="mail_customer" <%= settings.mail_customer === '1' ? 'checked' : '' %>> Gửi email xác nhận cho khách (nếu khách có nhập email)</label>
+
+  <h3>Máy chủ gửi mail (SMTP)</h3>
+  <div class="row">
+    <label>SMTP host<input name="smtp_host" value="<%= settings.smtp_host %>" placeholder="smtp.gmail.com"></label>
+    <label>Cổng<input name="smtp_port" value="<%= settings.smtp_port || '587' %>" placeholder="587"></label>
+  </div>
+  <label class="check"><input type="checkbox" name="smtp_secure" <%= settings.smtp_secure === '1' ? 'checked' : '' %>> Dùng SSL (thường bật khi cổng 465)</label>
+  <div class="row">
+    <label>Tài khoản SMTP<input name="smtp_user" value="<%= settings.smtp_user %>" placeholder="shop@gmail.com" autocomplete="off"></label>
+    <label>Mật khẩu SMTP
+      <input name="smtp_pass" type="password" autocomplete="new-password" placeholder="<%= hasPass ? '•••••••• (để trống = giữ nguyên)' : '' %>">
+    </label>
+  </div>
+  <div class="row">
+    <label>Email người gửi<small>Để trống = dùng tài khoản SMTP</small><input name="mail_from" value="<%= settings.mail_from %>"></label>
+    <label>Tên người gửi<small>Để trống = tên website</small><input name="mail_from_name" value="<%= settings.mail_from_name %>"></label>
+  </div>
+  <p class="muted">Gmail: bật xác minh 2 bước rồi tạo <b>Mật khẩu ứng dụng</b> (App Password) tại myaccount.google.com/apppasswords và dán vào ô mật khẩu. Host <code>smtp.gmail.com</code>, cổng <code>587</code>.</p>
+  <button class="btn">💾 Lưu cấu hình</button>
+</form>
+<form method="post" action="/admin/mail/test" class="card narrow">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <h3>Gửi thử</h3>
+  <p class="muted">Lưu cấu hình trước, sau đó bấm để gửi một email thử tới các địa chỉ nhận thông báo.</p>
+  <button class="btn btn-gray">✉️ Gửi email thử</button>
+</form>
+<%- include('_foot') %>

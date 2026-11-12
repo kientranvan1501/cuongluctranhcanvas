@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<%- settings.head_code || '' %>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= title ? title + ' | ' + settings.site_name : (settings.meta_title || settings.site_name) %></title>
+<meta name="description" content="<%= typeof metaDesc !== 'undefined' && metaDesc ? metaDesc : settings.meta_desc %>">
+<% if (settings.favicon) { %><link rel="icon" href="<%= settings.favicon %>"><% } %>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<% if (settings.custom_css) { %><style><%- settings.custom_css %></style><% } %>
+</head>
+<body>
+<%- settings.body_code || '' %>
+
+<div class="topbar">Để hỗ trợ nhanh, liên hệ hotline <a href="tel:<%= (settings.hotline||'').replace(/\D/g,'') %>"><%= settings.hotline %></a></div>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <button class="menu-toggle" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
+    <a href="/" class="logo">
+      <% if (settings.logo) { %><img src="<%= settings.logo %>" alt="<%= settings.site_name %>"><% } else { %><span><%= settings.site_name %></span><% } %>
+    </a>
+    <nav class="main-nav">
+      <ul>
+        <li><a href="/shop">Shop</a></li>
+        <% menu.forEach(function(c){ %>
+          <li class="<%= c.children.length ? 'has-sub' : '' %> <%= c.children.some(function(x){return x.children.length}) ? 'mega' : '' %>">
+            <a href="/danh-muc/<%= c.slug %>"><%= c.name %></a>
+            <% if (c.children.length) { %>
+              <div class="submenu">
+                <% c.children.forEach(function(s){ %>
+                  <div class="sub-col">
+                    <a class="sub-title" href="/danh-muc/<%= s.slug %>"><%= s.name %></a>
+                    <% s.children.forEach(function(g){ %><a href="/danh-muc/<%= g.slug %>"><%= g.name %></a><% }) %>
+                  </div>
+                <% }) %>
+              </div>
+            <% } %>
+          </li>
+        <% }) %>
+        <li><a href="/collections">Bộ Sưu Tập</a></li>
+        <li class="has-sub"><a href="/trang/ve-chung-toi">Về Chúng Tôi</a>
+          <div class="submenu"><div class="sub-col"><a href="/trang/ve-chung-toi">Giới thiệu</a><a href="/trang/lien-he">Liên Hệ</a></div></div>
+        </li>
+      </ul>
+    </nav>
+    <div class="header-icons">
+      <form action="/search" class="search-form"><input name="q" placeholder="Tìm tranh, mã sản phẩm..." value="<%= typeof q !== 'undefined' ? q : '' %>"><button aria-label="Tìm">⌕</button></form>
+      <a href="/gio-hang" class="cart-link" aria-label="Giỏ hàng">🛒<span class="cart-count" id="cartCount">0</span></a>
+    </div>
+  </div>
+</header>
+<main>
+<% if (flash) { %><div class="container"><div class="alert alert-<%= flash.type %>"><%= flash.msg %></div></div><% } %>

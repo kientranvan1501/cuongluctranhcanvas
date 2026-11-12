@@ -1,0 +1,32 @@
+<%- include('partials/header') %>
+<div class="container page-wrap">
+  <nav class="breadcrumb"><a href="/">Trang chủ</a> / <span><%= title %></span></nav>
+  <h1 class="page-title"><%= title %></h1>
+  <% if (subcats.length) { %>
+    <div class="chips"><% subcats.forEach(function(s){ %><a href="/danh-muc/<%= s.slug %>"><%= s.name %></a><% }) %></div>
+  <% } %>
+  <div class="toolbar">
+    <span><%= total %> sản phẩm</span>
+    <form>
+      <% if (q) { %><input type="hidden" name="q" value="<%= q %>"><% } %>
+      <select name="sort" onchange="this.form.submit()">
+        <option value="new" <%= sort==='new'?'selected':'' %>>Mới nhất</option>
+        <option value="price_asc" <%= sort==='price_asc'?'selected':'' %>>Giá tăng dần</option>
+        <option value="price_desc" <%= sort==='price_desc'?'selected':'' %>>Giá giảm dần</option>
+        <option value="name" <%= sort==='name'?'selected':'' %>>Tên A-Z</option>
+      </select>
+    </form>
+  </div>
+  <% if (products.length) { %>
+    <div class="product-grid"><% products.forEach(function(p){ %><%- include('partials/product-card', { p: p }) %><% }) %></div>
+  <% } else { %><p class="empty">Chưa có sản phẩm.</p><% } %>
+  <% if (pages > 1) { %>
+    <div class="pagination">
+      <% for (let i = 1; i <= pages; i++) { %>
+        <a class="<%= i===page?'active':'' %>" href="?<%= q ? 'q='+encodeURIComponent(q)+'&' : '' %>sort=<%= sort %>&page=<%= i %>"><%= i %></a>
+      <% } %>
+    </div>
+  <% } %>
+  <% if (description) { %><div class="cat-desc rich"><%- description %></div><% } %>
+</div>
+<%- include('partials/footer') %>

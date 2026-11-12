@@ -1,0 +1,25 @@
+<%- include('_head') %>
+<form method="post" class="card">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <p class="muted">Mã dán ở đây được chèn nguyên văn vào <strong>mọi trang</strong> của website (không áp dụng cho trang quản trị). Dùng cho Google Tag Manager, Google Analytics, Facebook Pixel, Google Search Console, TikTok Pixel, widget chat (Tawk.to, Zalo, Messenger)...</p>
+
+  <label>① Mã trong <code>&lt;head&gt;</code> — chèn ở đầu thẻ head
+    <small>VD: đoạn <code>&lt;script&gt;</code> đầu tiên của Google Tag Manager, gtag.js của Google Analytics, Facebook Pixel, thẻ <code>&lt;meta name="google-site-verification"&gt;</code></small>
+    <textarea name="head_code" rows="10" class="code" spellcheck="false"><%= settings.head_code %></textarea></label>
+
+  <label>② Mã ngay sau thẻ <code>&lt;body&gt;</code>
+    <small>VD: đoạn <code>&lt;noscript&gt;&lt;iframe ...googletagmanager...&gt;</code> thứ hai của Google Tag Manager</small>
+    <textarea name="body_code" rows="6" class="code" spellcheck="false"><%= settings.body_code %></textarea></label>
+
+  <label>③ Mã cuối trang (Footer) — chèn trước thẻ <code>&lt;/body&gt;</code>
+    <small>VD: widget chat Tawk.to / Zalo / Messenger, script remarketing, script tùy chỉnh</small>
+    <textarea name="footer_code" rows="10" class="code" spellcheck="false"><%= settings.footer_code %></textarea></label>
+
+  <label>④ CSS tùy chỉnh (không cần thẻ <code>&lt;style&gt;</code>)
+    <small>VD: <code>:root { --accent: #c0392b; }</code> để đổi màu nhấn</small>
+    <textarea name="custom_css" rows="6" class="code" spellcheck="false"><%= settings.custom_css %></textarea></label>
+
+  <div class="alert alert-warn">⚠ Mã sai cú pháp có thể làm hỏng giao diện. Hãy kiểm tra lại website sau khi lưu.</div>
+  <button class="btn">💾 Lưu mã nhúng</button>
+</form>
+<%- include('_foot') %>

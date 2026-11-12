@@ -1,0 +1,66 @@
+<%- include('partials/header') %>
+
+<section class="hero" style="background-image:url('<%= settings.hero_image %>')">
+  <div class="hero-overlay">
+    <h1><%= settings.hero_title %></h1>
+    <p><%= settings.hero_subtitle %></p>
+    <a class="btn btn-light" href="<%= settings.hero_link %>"><%= settings.hero_button %></a>
+  </div>
+</section>
+
+<%
+const sections = [
+  { title: 'Sản Phẩm Nổi Bật', list: featured, link: '/best-sellers' },
+  { title: 'BST Tranh Mới', list: newest, link: '/bst-moi' },
+  { cats: true },
+];
+if (sonDau) sections.push({ title: sonDau.name, list: sonDauProducts, link: '/danh-muc/' + sonDau.slug });
+%>
+
+<% sections.forEach(function(s){ %>
+  <% if (s.cats && homeCats.length) { %>
+  <section class="section container">
+    <div class="section-head"><h2>Bộ Sưu Tập</h2><a href="/collections">Xem thêm →</a></div>
+    <div class="carousel">
+      <button class="car-btn prev" aria-label="Trước">‹</button>
+      <div class="car-track">
+        <% homeCats.forEach(function(c){ %>
+          <a class="cat-tile" href="/danh-muc/<%= c.slug %>"><img src="<%= c.image || '/img/no-image.svg' %>" alt="<%= c.name %>" loading="lazy"><span><%= c.name %></span></a>
+        <% }) %>
+      </div>
+      <button class="car-btn next" aria-label="Sau">›</button>
+    </div>
+  </section>
+  <% } else if (s.list && s.list.length) { %>
+  <section class="section container">
+    <div class="section-head"><h2><%= s.title %></h2><a href="<%= s.link %>">Xem thêm →</a></div>
+    <div class="carousel">
+      <button class="car-btn prev" aria-label="Trước">‹</button>
+      <div class="car-track"><% s.list.forEach(function(p){ %><%- include('partials/product-card', { p: p }) %><% }) %></div>
+      <button class="car-btn next" aria-label="Sau">›</button>
+    </div>
+  </section>
+  <% } %>
+<% }) %>
+
+<section class="values">
+  <div class="container values-grid">
+    <div><span class="v-ico">◆</span><h3>Đa Dạng</h3><p>Hơn 20.000 mẫu thiết kế đa dạng chủ đề, phong cách.</p></div>
+    <div><span class="v-ico">★</span><h3>Chất Lượng</h3><p>Cam kết chất lượng, đổi trả nếu không hài lòng.</p></div>
+    <div><span class="v-ico">✔</span><h3>Uy Tín</h3><p>Hàng trăm nghìn khách hàng tin tưởng lựa chọn.</p></div>
+    <div><span class="v-ico">➤</span><h3>Tốc Độ</h3><p>Hỗ trợ lắp đặt miễn phí tận nhà trong 24h.</p></div>
+  </div>
+</section>
+
+<% if (settings.video_url) { %>
+<section class="section container video-wrap">
+  <iframe src="<%= settings.video_url.replace('watch?v=', 'embed/').replace('youtu.be/', 'www.youtube.com/embed/') %>" loading="lazy" allowfullscreen title="Video"></iframe>
+</section>
+<% } %>
+
+<section class="cta">
+  <h2>Bạn cần tìm mẫu thiết kế ưng ý hơn?</h2>
+  <a class="btn btn-light" href="/shop">Xem Tất Cả Bộ Tranh</a>
+</section>
+
+<%- include('partials/footer') %>

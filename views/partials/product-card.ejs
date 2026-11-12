@@ -1,0 +1,16 @@
+<a class="product-card" href="/san-pham/<%= p.slug %>">
+  <div class="pc-img">
+    <img src="<%= p.thumb %>" alt="<%= p.name %>" loading="lazy">
+    <% if (p.sale_price && p.sale_price < p.price && !p.variants.length) { %><span class="badge">-<%= Math.round(100 - p.sale_price*100/p.price) %>%</span><% } %>
+  </div>
+  <div class="pc-body">
+    <h3><%= p.name %><% if (p.code) { %> - <%= p.code %><% } %></h3>
+    <div class="price">
+      <% if (p.variants.length) { %>
+        <%= p.has_range ? 'Từ ' : '' %><%= formatPrice(p.min_price) %>
+      <% } else if (p.sale_price && p.sale_price < p.price) { %>
+        <span class="sale"><%= formatPrice(p.sale_price) %></span> <del><%= formatPrice(p.price) %></del>
+      <% } else { %><%= formatPrice(p.price) %><% } %>
+    </div>
+  </div>
+</a>

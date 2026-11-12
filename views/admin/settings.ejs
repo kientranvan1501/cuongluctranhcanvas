@@ -1,0 +1,61 @@
+<%- include('_head') %>
+<form method="post" enctype="multipart/form-data" class="form-grid">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="col-main">
+    <div class="card">
+      <h3>Thông tin chung</h3>
+      <div class="row">
+        <label>Tên website<input name="site_name" value="<%= settings.site_name %>"></label>
+        <label>Hotline<input name="hotline" value="<%= settings.hotline %>"></label>
+      </div>
+      <div class="row">
+        <label>Email<input name="email" value="<%= settings.email %>"></label>
+        <label>Số Zalo (nút chat nổi, để trống để ẩn)<input name="zalo" value="<%= settings.zalo %>"></label>
+      </div>
+      <label>Địa chỉ showroom<input name="address" value="<%= settings.address %>"></label>
+      <div class="row">
+        <label>Tên công ty<input name="company_name" value="<%= settings.company_name %>"></label>
+        <label>Thông tin GPKD<input name="company_info" value="<%= settings.company_info %>"></label>
+      </div>
+      <label>Giới thiệu ngắn (footer)<textarea name="about" rows="3"><%= settings.about %></textarea></label>
+    </div>
+    <div class="card">
+      <h3>Banner trang chủ</h3>
+      <label>Tiêu đề<input name="hero_title" value="<%= settings.hero_title %>"></label>
+      <label>Dòng phụ<input name="hero_subtitle" value="<%= settings.hero_subtitle %>"></label>
+      <div class="row">
+        <label>Chữ trên nút<input name="hero_button" value="<%= settings.hero_button %>"></label>
+        <label>Link nút<input name="hero_link" value="<%= settings.hero_link %>"></label>
+      </div>
+      <% if (settings.hero_image) { %><img class="banner-preview" src="<%= settings.hero_image %>" alt=""><% } %>
+      <label>Ảnh banner (URL)<input name="hero_image" value="<%= settings.hero_image %>"></label>
+      <label>hoặc tải ảnh lên<input type="file" name="hero_file" accept="image/*"></label>
+      <label>Video YouTube trang chủ (link, để trống để ẩn)<input name="video_url" value="<%= settings.video_url %>"></label>
+    </div>
+    <div class="card">
+      <h3>SEO trang chủ</h3>
+      <label>Meta title<input name="meta_title" value="<%= settings.meta_title %>"></label>
+      <label>Meta description<textarea name="meta_desc" rows="2"><%= settings.meta_desc %></textarea></label>
+    </div>
+  </div>
+  <div class="col-side">
+    <div class="card">
+      <button class="btn full">💾 Lưu cài đặt</button>
+    </div>
+    <div class="card">
+      <h3>Logo &amp; Favicon</h3>
+      <% if (settings.logo) { %><img class="logo-preview" src="<%= settings.logo %>" alt=""><% } %>
+      <label>Logo (URL)<input name="logo" value="<%= settings.logo %>" placeholder="Để trống: hiện tên website"></label>
+      <label>Tải logo<input type="file" name="logo_file" accept="image/*"></label>
+      <label>Favicon (URL)<input name="favicon" value="<%= settings.favicon %>"></label>
+      <label>Tải favicon<input type="file" name="favicon_file" accept="image/*"></label>
+    </div>
+    <div class="card">
+      <h3>Mạng xã hội</h3>
+      <label>Facebook<input name="facebook" value="<%= settings.facebook %>"></label>
+      <label>Instagram<input name="instagram" value="<%= settings.instagram %>"></label>
+      <label>YouTube<input name="youtube" value="<%= settings.youtube %>"></label>
+    </div>
+  </div>
+</form>
+<%- include('_foot') %>

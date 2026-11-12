@@ -1,0 +1,7 @@
+<%- include('partials/header') %>
+<div class="container page-wrap narrow">
+  <h1 class="page-title"><%= page.title %></h1>
+  <%# Mã [form_uu_dai] trong nội dung trang sẽ được thay bằng form đăng ký nhận ưu đãi %>
+  <div class="rich"><%- page.content.split('[form_uu_dai]').join(include('partials/promo-form')) %></div>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,10 @@
+  </div>
+</div>
+<script>
+  // Xác nhận trước khi xóa
+  document.querySelectorAll('form[data-confirm]').forEach(function (f) {
+    f.addEventListener('submit', function (e) { if (!confirm(f.dataset.confirm)) e.preventDefault(); });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+<%- include('_head') %>
+<div class="form-grid">
+  <div class="col-main">
+    <div class="card">
+      <h3>Sản phẩm</h3>
+      <table class="table">
+        <thead><tr><th>Sản phẩm</th><th>Kích thước</th><th>Đơn giá</th><th>SL</th><th>Thành tiền</th></tr></thead>
+        <tbody>
+          <% o.items.forEach(function(i){ %>
+            <tr><td><%= i.name %> <span class="muted"><%= i.code %></span></td><td><%= i.variant || '—' %></td><td><%= formatPrice(i.price) %></td><td><%= i.qty %></td><td><%= formatPrice(i.price * i.qty) %></td></tr>
+          <% }) %>
+          <tr><td colspan="4" style="text-align:right"><strong>Tổng cộng</strong></td><td><strong><%= formatPrice(o.total) %></strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="col-side">
+    <div class="card">
+      <h3>Khách hàng</h3>
+      <p><strong><%= o.customer_name %></strong><br>
+        📞 <a href="tel:<%= o.phone %>"><%= o.phone %></a><br>
+        <% if (o.email) { %>✉ <%= o.email %><br><% } %>
+        <% if (o.address) { %>📍 <%= o.address %><br><% } %>
+        🕒 <%= o.created_at %></p>
+      <% if (o.note) { %><p class="note"><%= o.note %></p><% } %>
+      <% if (isAdmin) { %>
+      <form method="post">
+        <input type="hidden" name="_csrf" value="<%= csrf %>">
+        <label>Trạng thái
+          <select name="status"><% Object.keys(STATUSES).forEach(function(k){ %><option value="<%= k %>" <%= o.status===k?'selected':'' %>><%= STATUSES[k] %></option><% }) %></select>
+        </label>
+        <button class="btn full">Cập nhật</button>
+      </form>
+      <% } else { %>
+      <p>Trạng thái: <span class="status s-<%= o.status %>"><%= STATUSES[o.status] || o.status %></span></p>
+      <% } %>
+      <a class="btn btn-gray full" href="/admin/orders">← Danh sách đơn</a>
+    </div>
+  </div>
+</div>
+<%- include('_foot') %>

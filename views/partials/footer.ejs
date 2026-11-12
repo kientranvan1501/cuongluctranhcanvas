@@ -1,0 +1,40 @@
+</main>
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div>
+      <h4><%= settings.company_name %></h4>
+      <p><%= settings.company_info %></p>
+      <p>Hotline: <a href="tel:<%= (settings.hotline||'').replace(/\D/g,'') %>"><%= settings.hotline %></a></p>
+      <p>Email: <a href="mailto:<%= settings.email %>"><%= settings.email %></a></p>
+      <p>Showroom: <%= settings.address %></p>
+    </div>
+    <div>
+      <h4>Về <%= settings.site_name %></h4>
+      <p><%= settings.about %></p>
+    </div>
+    <div>
+      <h4>Sản Phẩm</h4>
+      <ul><% menu.forEach(function(c){ %><li><a href="/danh-muc/<%= c.slug %>"><%= c.name %></a></li><% }) %></ul>
+    </div>
+    <div>
+      <h4>Các Chính Sách</h4>
+      <ul><% footerPages.forEach(function(p){ %><li><a href="/trang/<%= p.slug %>"><%= p.title %></a></li><% }) %></ul>
+      <div class="socials">
+        <% if (settings.facebook) { %><a href="<%= settings.facebook %>" target="_blank" rel="noopener">Facebook</a><% } %>
+        <% if (settings.instagram) { %><a href="<%= settings.instagram %>" target="_blank" rel="noopener">Instagram</a><% } %>
+        <% if (settings.youtube) { %><a href="<%= settings.youtube %>" target="_blank" rel="noopener">YouTube</a><% } %>
+      </div>
+    </div>
+  </div>
+  <div class="copyright">© <%= new Date().getFullYear() %>, <%= settings.site_name %></div>
+</footer>
+
+<div class="float-btns">
+  <% if (settings.zalo) { %><a class="fb-zalo" href="https://zalo.me/<%= settings.zalo %>" target="_blank" rel="noopener">Zalo</a><% } %>
+  <a class="fb-phone" href="tel:<%= (settings.hotline||'').replace(/\D/g,'') %>" aria-label="Gọi">✆</a>
+</div>
+
+<script src="/js/main.js"></script>
+<%- settings.footer_code || '' %>
+</body>
+</html>

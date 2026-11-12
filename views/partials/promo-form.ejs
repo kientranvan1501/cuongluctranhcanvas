@@ -1,0 +1,54 @@
+<% const _msg = typeof promoMsg !== 'undefined' ? promoMsg : null; %>
+<section class="promo-box" id="uu-dai">
+  <div class="promo-aside">
+    <span class="promo-tag">Ưu đãi dành riêng cho bạn</span>
+    <h2 class="promo-title">Đăng ký nhận ưu đãi</h2>
+    <p class="promo-lead">Để lại thông tin, chúng tôi sẽ gửi ưu đãi và tư vấn mẫu tranh phù hợp nhất với không gian của bạn.</p>
+    <ul class="promo-perks">
+      <li><span class="perk-ic">%</span><div><b>Mã giảm giá</b>cho đơn hàng đầu tiên</div></li>
+      <li><span class="perk-ic">✦</span><div><b>Tư vấn miễn phí</b>chọn mẫu, kích thước, vị trí treo</div></li>
+      <li><span class="perk-ic">★</span><div><b>Cập nhật sớm nhất</b>bộ sưu tập tranh mới</div></li>
+    </ul>
+    <% if (settings.hotline) { %>
+      <a class="promo-hotline" href="tel:<%= String(settings.hotline).replace(/[^0-9+]/g, '') %>">
+        <span>Cần tư vấn ngay?</span><strong><%= settings.hotline %></strong>
+      </a>
+    <% } %>
+  </div>
+
+  <div class="promo-main">
+    <% if (_msg && _msg.type === 'success') { %>
+      <div class="promo-done">
+        <div class="promo-done-ic">✓</div>
+        <h3>Đăng ký thành công!</h3>
+        <p><%= _msg.msg %></p>
+      </div>
+    <% } else { %>
+      <% if (_msg) { %><div class="promo-alert"><%= _msg.msg %></div><% } %>
+      <form class="promo-form" method="post" action="/dang-ky-uu-dai">
+        <input type="hidden" name="source" value="<%= typeof page !== 'undefined' && page ? page.slug : '' %>">
+        <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
+        <div class="pf-row">
+          <label class="pf-field"><span>Họ và tên <i>*</i></span>
+            <input name="name" placeholder="Nguyễn Văn A" required maxlength="100" autocomplete="name"></label>
+          <label class="pf-field"><span>Số điện thoại / Zalo <i>*</i></span>
+            <input name="phone" type="tel" placeholder="09xx xxx xxx" required pattern="[0-9 .+]{8,15}" maxlength="20" autocomplete="tel"></label>
+        </div>
+        <label class="pf-field"><span>Email</span>
+          <input name="email" type="email" placeholder="email@example.com" maxlength="120" autocomplete="email"></label>
+        <div class="pf-field">
+          <span>Bạn muốn treo tranh ở đâu?</span>
+          <div class="pf-chips">
+            <% ['Phòng khách', 'Phòng ngủ', 'Phòng ăn / Bếp', 'Căn hộ', 'Văn phòng', 'Cửa hàng / Quán', 'Khác'].forEach(function (n) { %>
+              <label class="chip"><input type="radio" name="need" value="<%= n %>"><span><%= n %></span></label>
+            <% }) %>
+          </div>
+        </div>
+        <label class="pf-field"><span>Ghi chú</span>
+          <textarea name="note" rows="3" placeholder="Mẫu tranh, kích thước hoặc phong cách bạn quan tâm..." maxlength="1000"></textarea></label>
+        <button class="btn promo-submit">Nhận ưu đãi ngay <span aria-hidden="true">→</span></button>
+        <p class="pf-privacy">🔒 Thông tin của bạn được bảo mật và chỉ dùng để liên hệ tư vấn.</p>
+      </form>
+    <% } %>
+  </div>
+</section>

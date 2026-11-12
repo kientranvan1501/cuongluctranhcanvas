@@ -1,0 +1,20 @@
+<%- include('_head') %>
+<form method="post" action="/admin/pages<%= pg.id ? '/' + pg.id : '' %>" class="card">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="row">
+    <label>Tiêu đề *<input name="title" value="<%= pg.title || '' %>" required></label>
+    <label>Đường dẫn (slug)<input name="slug" value="<%= pg.slug || '' %>" placeholder="Để trống sẽ tự tạo"></label>
+  </div>
+  <label>Nội dung (HTML)<textarea name="content" rows="18" class="code"><%= pg.content || '' %></textarea></label>
+  <div class="row">
+    <label>Vị trí footer
+      <select name="footer_group">
+        <option value="">Không hiện ở footer</option>
+        <option value="policy" <%= pg.footer_group==='policy'?'selected':'' %>>Cột "Các Chính Sách"</option>
+      </select>
+    </label>
+    <label class="check"><input type="checkbox" name="active" <%= pg.active ? 'checked' : '' %>> Hiển thị</label>
+  </div>
+  <div class="btn-row"><button class="btn">💾 Lưu</button><a class="btn btn-gray" href="/admin/pages">Hủy</a></div>
+</form>
+<%- include('_foot') %>

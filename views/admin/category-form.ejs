@@ -1,0 +1,22 @@
+<%- include('_head') %>
+<form method="post" enctype="multipart/form-data" action="/admin/categories<%= c.id ? '/' + c.id : '' %>" class="card narrow">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <label>Tên danh mục *<input name="name" value="<%= c.name || '' %>" required></label>
+  <div class="row">
+    <label>Slug<input name="slug" value="<%= c.slug || '' %>" placeholder="Để trống sẽ tự tạo"></label>
+    <label>Thứ tự<input name="sort_order" type="number" value="<%= c.sort_order || 0 %>"></label>
+  </div>
+  <label>Danh mục cha
+    <select name="parent_id">
+      <option value="">-- Không (danh mục gốc, hiện trên menu) --</option>
+      <% cats.forEach(function(x){ %><option value="<%= x.id %>" <%= c.parent_id===x.id?'selected':'' %>><%= '— '.repeat(x.depth) %><%= x.name %></option><% }) %>
+    </select>
+  </label>
+  <% if (c.image) { %><img class="thumb lg" src="<%= c.image %>" alt=""><% } %>
+  <label>Ảnh đại diện (URL)<input name="image" value="<%= c.image || '' %>"></label>
+  <label>hoặc tải ảnh lên<input type="file" name="upload" accept="image/*"></label>
+  <label>Mô tả (hiện cuối trang danh mục, hỗ trợ HTML)<textarea name="description" rows="5" class="code"><%= c.description || '' %></textarea></label>
+  <label class="check"><input type="checkbox" name="show_home" <%= c.show_home ? 'checked' : '' %>> Hiện ở mục "Bộ Sưu Tập" trang chủ</label>
+  <div class="btn-row"><button class="btn">💾 Lưu</button><a class="btn btn-gray" href="/admin/categories">Hủy</a></div>
+</form>
+<%- include('_foot') %>

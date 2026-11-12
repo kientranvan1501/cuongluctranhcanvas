@@ -1,0 +1,63 @@
+<%- include('_head') %>
+<form method="post" enctype="multipart/form-data" action="/admin/products<%= p.id ? '/' + p.id : '' %>" class="form-grid">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="col-main">
+    <div class="card">
+      <label>Tên sản phẩm *<input name="name" value="<%= p.name || '' %>" required></label>
+      <div class="row">
+        <label>Mã sản phẩm<input name="code" value="<%= p.code || '' %>" placeholder="VD: ASH014"></label>
+        <label>Đường dẫn (slug)<input name="slug" value="<%= p.slug || '' %>" placeholder="Để trống sẽ tự tạo"></label>
+      </div>
+      <label>Mô tả ngắn<textarea name="short_desc" rows="2"><%= p.short_desc || '' %></textarea></label>
+      <label>Mô tả chi tiết (hỗ trợ HTML)<textarea name="description" rows="10" class="code"><%= p.description || '' %></textarea></label>
+    </div>
+
+    <div class="card">
+      <h3>Hình ảnh</h3>
+      <% if (p.images.length) { %>
+        <div class="img-preview"><% p.images.forEach(function(img){ %><img src="<%= img %>" alt=""><% }) %></div>
+      <% } %>
+      <label>Danh sách ảnh (mỗi dòng 1 đường dẫn, dòng đầu là ảnh đại diện — xóa dòng để bỏ ảnh)
+        <textarea name="images" rows="4" class="code"><%= p.images.join('\n') %></textarea></label>
+      <label>Tải ảnh lên từ máy (chọn được nhiều ảnh)<input type="file" name="upload" multiple accept="image/*"></label>
+    </div>
+
+    <div class="card">
+      <h3>Giá &amp; kích thước</h3>
+      <div class="row">
+        <label>Giá gốc (đ)<input name="price" value="<%= p.price || '' %>" inputmode="numeric"></label>
+        <label>Giá khuyến mãi (đ)<input name="sale_price" value="<%= p.sale_price || '' %>" inputmode="numeric" placeholder="Để trống nếu không giảm"></label>
+      </div>
+      <label>Các kích thước / biến thể — mỗi dòng: <code>Tên | Giá</code> (nếu có, giá biến thể sẽ được dùng thay giá gốc)
+        <textarea name="variants" rows="5" class="code" placeholder="40x60cm | 920000&#10;60x90cm | 1330000"><%= p.variants.map(function(v){ return v.name + ' | ' + v.price }).join('\n') %></textarea></label>
+    </div>
+
+    <div class="card">
+      <h3>SEO</h3>
+      <label>Meta title<input name="meta_title" value="<%= p.meta_title || '' %>"></label>
+      <label>Meta description<textarea name="meta_desc" rows="2"><%= p.meta_desc || '' %></textarea></label>
+    </div>
+  </div>
+
+  <div class="col-side">
+    <div class="card">
+      <h3>Xuất bản</h3>
+      <label class="check"><input type="checkbox" name="active" <%= p.active ? 'checked' : '' %>> Hiển thị trên website</label>
+      <label class="check"><input type="checkbox" name="featured" <%= p.featured ? 'checked' : '' %>> Sản phẩm nổi bật</label>
+      <label class="check"><input type="checkbox" name="is_new" <%= p.is_new ? 'checked' : '' %>> BST mới</label>
+      <button class="btn full">💾 Lưu sản phẩm</button>
+      <% if (p.id) { %><a class="btn btn-gray full" href="/san-pham/<%= p.slug %>" target="_blank">Xem trên web</a><% } %>
+      <a class="btn btn-gray full" href="/admin/products">← Quay lại</a>
+    </div>
+    <div class="card">
+      <label>Danh mục
+        <select name="category_id">
+          <option value="">-- Không --</option>
+          <% cats.forEach(function(c){ %><option value="<%= c.id %>" <%= p.category_id===c.id?'selected':'' %>><%= '— '.repeat(c.depth) %><%= c.name %></option><% }) %>
+        </select>
+      </label>
+      <label>Nhà cung cấp / Họa sĩ<input name="vendor" value="<%= p.vendor || '' %>"></label>
+    </div>
+  </div>
+</form>
+<%- include('_foot') %>

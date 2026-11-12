@@ -1,0 +1,33 @@
+<%- include('_head') %>
+<div class="card">
+  <p class="muted">Khách điền form "Đăng ký nhận ưu đãi". Form được chèn vào trang nội dung bằng mã <code>[form_uu_dai]</code>.</p>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>#</th><th>Khách hàng</th><th>SĐT</th><th>Email</th><th>Không gian</th><th>Ghi chú</th><th>Ngày</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+      <% leads.forEach(function(l){ %>
+        <tr>
+          <td><%= l.id %></td>
+          <td><strong><%= l.name %></strong></td>
+          <td><a href="tel:<%= l.phone %>"><%= l.phone %></a></td>
+          <td><% if (l.email) { %><a href="mailto:<%= l.email %>"><%= l.email %></a><% } %></td>
+          <td><%= l.need %></td>
+          <td><%= l.note %></td>
+          <td><%= l.created_at %></td>
+          <td>
+            <form method="post" action="/admin/leads/<%= l.id %>">
+              <input type="hidden" name="_csrf" value="<%= csrf %>">
+              <select name="status" onchange="this.form.submit()"><% Object.keys(LEAD_STATUSES).forEach(function(k){ %><option value="<%= k %>" <%= l.status === k ? 'selected' : '' %>><%= LEAD_STATUSES[k] %></option><% }) %></select>
+            </form>
+          </td>
+          <td class="actions">
+            <form method="post" action="/admin/leads/<%= l.id %>/delete" data-confirm="Xóa đăng ký của <%= l.name %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!leads.length) { %><tr><td colspan="9" class="muted">Chưa có đăng ký nào.</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<%- include('_foot') %>

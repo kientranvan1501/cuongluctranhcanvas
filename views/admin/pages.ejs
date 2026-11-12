@@ -1,0 +1,22 @@
+<%- include('_head') %>
+<div class="card">
+  <div class="card-head"><p class="muted">Trang chính sách, liên hệ, giới thiệu... Trang thuộc nhóm "Chính sách" sẽ hiện ở footer.</p><a class="btn btn-sm" href="/admin/pages/new">+ Thêm trang</a></div>
+  <table class="table">
+    <thead><tr><th>Tiêu đề</th><th>Đường dẫn</th><th>Footer</th><th>Hiển thị</th><th></th></tr></thead>
+    <tbody>
+      <% pages.forEach(function(pg){ %>
+        <tr>
+          <td><a href="/admin/pages/<%= pg.id %>/edit"><strong><%= pg.title %></strong></a></td>
+          <td><a href="/trang/<%= pg.slug %>" target="_blank" class="muted">/trang/<%= pg.slug %></a></td>
+          <td><%= pg.footer_group === 'policy' ? 'Chính sách' : '' %></td>
+          <td><%= pg.active ? '✅' : '⛔' %></td>
+          <td class="actions">
+            <a class="btn btn-sm btn-gray" href="/admin/pages/<%= pg.id %>/edit">Sửa</a>
+            <form method="post" action="/admin/pages/<%= pg.id %>/delete" data-confirm="Xóa trang này?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>
+<%- include('_foot') %>

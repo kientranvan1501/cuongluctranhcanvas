@@ -1,0 +1,10 @@
+<%- include('partials/header') %>
+<div class="container page-wrap">
+  <h1 class="page-title">Bộ Sưu Tập</h1>
+  <div class="cat-grid">
+    <% cats.forEach(function(c){ %>
+      <a class="cat-tile" href="/danh-muc/<%= c.slug %>"><img src="<%= c.image || '/img/no-image.svg' %>" alt="<%= c.name %>" loading="lazy"><span><%= c.name %></span></a>
+    <% }) %>
+  </div>
+</div>
+<%- include('partials/footer') %>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Đăng nhập quản trị</title>
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="login-page">
+  <form method="post" class="login-box">
+    <h1><%= settings.site_name %></h1>
+    <p class="muted">Đăng nhập trang quản trị</p>
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <label>Tên đăng nhập<input name="username" required autofocus></label>
+    <label>Mật khẩu<input name="password" type="password" required></label>
+    <button class="btn full">Đăng nhập</button>
+  </form>
+</body>
+</html>

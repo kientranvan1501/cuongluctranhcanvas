@@ -1,0 +1,49 @@
+<%- include('partials/header') %>
+<div class="container page-wrap">
+  <nav class="breadcrumb"><a href="/">Trang chủ</a> / <% if (category) { %><a href="/danh-muc/<%= category.slug %>"><%= category.name %></a> / <% } %><span><%= product.name %></span></nav>
+  <div class="product-detail">
+    <div class="gallery">
+      <div class="main-img"><img id="mainImg" src="<%= product.thumb %>" alt="<%= product.name %>"></div>
+      <% if (product.images.length > 1) { %>
+        <div class="thumbs"><% product.images.forEach(function(img, i){ %><img src="<%= img %>" class="<%= i===0?'active':'' %>" data-full="<%= img %>" alt=""><% }) %></div>
+      <% } %>
+    </div>
+    <div class="info">
+      <h1><%= product.name %><% if (product.code) { %> - <%= product.code %><% } %></h1>
+      <% if (product.vendor) { %><p class="vendor"><%= product.vendor %></p><% } %>
+      <div class="price big" id="priceBox">
+        <% if (product.variants.length) { %><%= formatPrice(product.variants[0].price) %>
+        <% } else if (product.sale_price && product.sale_price < product.price) { %><span class="sale"><%= formatPrice(product.sale_price) %></span> <del><%= formatPrice(product.price) %></del>
+        <% } else { %><%= formatPrice(product.price) %><% } %>
+      </div>
+      <% if (product.short_desc) { %><p><%= product.short_desc %></p><% } %>
+      <% if (product.variants.length) { %>
+        <div class="variants">
+          <label>Kích thước:</label>
+          <div class="variant-list">
+            <% product.variants.forEach(function(v, i){ %>
+              <button type="button" class="variant <%= i===0?'active':'' %>" data-name="<%= v.name %>" data-price="<%= v.price %>"><%= v.name %></button>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+      <div class="qty-row">
+        <input type="number" id="qty" value="1" min="1" max="99" aria-label="Số lượng">
+        <button class="btn" id="addCart"
+          data-id="<%= product.id %>" data-name="<%= product.name %><%= product.code ? ' - ' + product.code : '' %>"
+          data-img="<%= product.thumb %>" data-slug="<%= product.slug %>"
+          data-variant="<%= product.variants.length ? product.variants[0].name : '' %>"
+          data-price="<%= product.variants.length ? product.variants[0].price : (product.sale_price && product.sale_price < product.price ? product.sale_price : product.price) %>">Thêm vào giỏ</button>
+      </div>
+      <a class="btn btn-outline full" href="tel:<%= (settings.hotline||'').replace(/\D/g,'') %>">Gọi tư vấn: <%= settings.hotline %></a>
+      <div class="rich desc"><%- product.description %></div>
+    </div>
+  </div>
+  <% if (related.length) { %>
+    <section class="section">
+      <div class="section-head"><h2>Sản phẩm liên quan</h2></div>
+      <div class="product-grid"><% related.forEach(function(p){ %><%- include('partials/product-card', { p: p }) %><% }) %></div>
+    </section>
+  <% } %>
+</div>
+<%- include('partials/footer') %>
