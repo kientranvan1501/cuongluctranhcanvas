@@ -20,35 +20,22 @@
       <label>Giới thiệu ngắn (footer)<textarea name="about" rows="3"><%= settings.about %></textarea></label>
     </div>
     <div class="card">
-      <h3>Banner trang chủ</h3>
-      <label>Tiêu đề<input name="hero_title" value="<%= settings.hero_title %>"></label>
-      <label>Dòng phụ<input name="hero_subtitle" value="<%= settings.hero_subtitle %>"></label>
-      <div class="row">
-        <label>Chữ trên nút<input name="hero_button" value="<%= settings.hero_button %>"></label>
-        <label>Link nút<input name="hero_link" value="<%= settings.hero_link %>"></label>
-      </div>
-      <% if (settings.hero_image) { %><img class="banner-preview" src="<%= settings.hero_image %>" alt=""><% } %>
-      <label>Ảnh banner (URL)<input name="hero_image" value="<%= settings.hero_image %>"></label>
-      <label>hoặc tải ảnh lên<input type="file" name="hero_file" accept="image/*"></label>
+      <h3>Trang chủ</h3>
+      <p class="muted">Logo, favicon và banner trang chủ: chỉnh tại <a href="/admin/branding">🎨 Logo &amp; Banner</a>.</p>
       <label>Video YouTube trang chủ (link, để trống để ẩn)<input name="video_url" value="<%= settings.video_url %>"></label>
     </div>
     <div class="card">
       <h3>SEO trang chủ</h3>
-      <label>Meta title<input name="meta_title" value="<%= settings.meta_title %>"></label>
-      <label>Meta description<textarea name="meta_desc" rows="2"><%= settings.meta_desc %></textarea></label>
+      <label>Địa chỉ website chính
+        <small>Ví dụ https://tranhcuongluc.vn — dùng cho thẻ canonical, sitemap.xml, chia sẻ Facebook. Để trống = lấy theo tên miền đang truy cập.</small>
+        <input name="site_url" value="<%= settings.site_url %>" placeholder="https://tenmiencuaban.vn"></label>
+      <label>Meta title<small>Nên dưới 60 ký tự, có từ khóa chính</small><input name="meta_title" value="<%= settings.meta_title %>" maxlength="70"></label>
+      <label>Meta description<small>Nên 120–160 ký tự, mô tả hấp dẫn để khách bấm vào từ Google</small><textarea name="meta_desc" rows="2" maxlength="200"><%= settings.meta_desc %></textarea></label>
     </div>
   </div>
   <div class="col-side">
     <div class="card">
       <button class="btn full">💾 Lưu cài đặt</button>
-    </div>
-    <div class="card">
-      <h3>Logo &amp; Favicon</h3>
-      <% if (settings.logo) { %><img class="logo-preview" src="<%= settings.logo %>" alt=""><% } %>
-      <label>Logo (URL)<input name="logo" value="<%= settings.logo %>" placeholder="Để trống: hiện tên website"></label>
-      <label>Tải logo<input type="file" name="logo_file" accept="image/*"></label>
-      <label>Favicon (URL)<input name="favicon" value="<%= settings.favicon %>"></label>
-      <label>Tải favicon<input type="file" name="favicon_file" accept="image/*"></label>
     </div>
     <div class="card">
       <h3>Mạng xã hội</h3>

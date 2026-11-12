@@ -268,19 +268,53 @@ router.post('/pages/:id/delete', (req, res) => {
 
 // ---------- Cài đặt chung + Mã nhúng Header/Footer ----------
 const SETTING_KEYS = ['site_name', 'hotline', 'email', 'address', 'company_name', 'company_info', 'about',
-  'facebook', 'instagram', 'youtube', 'zalo', 'meta_title', 'meta_desc',
-  'hero_title', 'hero_subtitle', 'hero_button', 'hero_link', 'hero_image', 'video_url', 'logo', 'favicon'];
+  'facebook', 'instagram', 'youtube', 'zalo', 'meta_title', 'meta_desc', 'video_url', 'site_url'];
 const CODE_KEYS = ['head_code', 'body_code', 'footer_code', 'custom_css'];
 
 router.get('/settings', (req, res) => res.render('admin/settings', { title: 'Cài đặt website' }));
-router.post('/settings', upload.fields([{ name: 'logo_file' }, { name: 'favicon_file' }, { name: 'hero_file' }]), csrfCheck, (req, res) => {
+router.post('/settings', upload.none(), csrfCheck, (req, res) => {
   SETTING_KEYS.forEach(k => setSetting(k, req.body[k]));
-  const f = req.files || {};
-  if (f.logo_file) setSetting('logo', '/uploads/' + f.logo_file[0].filename);
-  if (f.favicon_file) setSetting('favicon', '/uploads/' + f.favicon_file[0].filename);
-  if (f.hero_file) setSetting('hero_image', '/uploads/' + f.hero_file[0].filename);
   flash(req, 'success', 'Đã lưu cài đặt');
   res.redirect('/admin/settings');
+});
+
+// ---------- Logo & Banner ----------
+// Ảnh: tải file mới > nhập URL > giữ nguyên; tick "Xóa" để bỏ ảnh
+const BRAND_IMAGES = { logo: 'logo_file', favicon: 'favicon_file', hero_image: 'hero_file', hero_image_mobile: 'hero_mobile_file' };
+const BRAND_TEXT = ['hero_title', 'hero_subtitle', 'hero_button', 'hero_link', 'hero_alt'];
+const clampInt = (v, min, max, def) => { const n = parseInt(v); return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def; };
+router.get('/branding', (req, res) => res.render('admin/branding', { title: 'Logo & Banner' }));
+// Slider: mỗi slide có mã riêng (slide_id[]), trường đặt tên slide_<field>_<id>, giữ đúng thứ tự trên form
+const SLIDE_TEXT = ['alt', 'title', 'subtitle', 'button', 'link'];
+const toArr = v => (v === undefined ? [] : Array.isArray(v) ? v : [v]);
+router.post('/branding', upload.any(), csrfCheck, (req, res) => {
+  const f = {}, b = req.body;
+  (req.files || []).forEach(x => { f[x.fieldname] = '/uploads/' + x.filename; });
+  // Ảnh: file mới > tick xóa > URL nhập
+  const pickImage = (urlName, fileName, removeName) =>
+    f[fileName] || (b[removeName] ? '' : String(b[urlName] || '').trim());
+  for (const [key, field] of Object.entries(BRAND_IMAGES)) {
+    if (f[field] || b['remove_' + key] || b[key] !== undefined) setSetting(key, pickImage(key, field, 'remove_' + key));
+  }
+  BRAND_TEXT.forEach(k => setSetting(k, String(b[k] || '').trim()));
+
+  const slides = toArr(b.slide_id).map(id => String(id).replace(/[^a-z0-9]/gi, '')).filter(Boolean).map(id => {
+    const s = {
+      image: pickImage(`slide_image_${id}`, `slide_file_${id}`, `slide_remove_image_${id}`),
+      image_mobile: pickImage(`slide_image_mobile_${id}`, `slide_mfile_${id}`, `slide_remove_image_mobile_${id}`),
+    };
+    SLIDE_TEXT.forEach(k => { s[k] = String(b[`slide_${k}_${id}`] || '').trim(); });
+    return s;
+  }).filter(s => s.image); // slide không có ảnh thì bỏ
+  setSetting('hero_slides', JSON.stringify(slides));
+  setSetting('hero_mode', b.hero_mode === 'slider' ? 'slider' : 'static');
+  setSetting('hero_interval', clampInt(b.hero_interval, 3, 15, 5));
+  setSetting('logo_height', clampInt(b.logo_height, 24, 90, 48));
+  setSetting('hero_overlay', clampInt(b.hero_overlay, 0, 85, 55));
+  setSetting('hero_height', clampInt(b.hero_height, 40, 100, 78));
+  if (b.hero_mode === 'slider' && !slides.length) flash(req, 'warn', 'Đã lưu, nhưng slider chưa có slide nào có ảnh nên trang chủ đang hiện banner tĩnh');
+  else flash(req, 'success', 'Đã lưu logo & banner');
+  res.redirect('/admin/branding');
 });
 
 router.get('/code', (req, res) => res.render('admin/code', { title: 'Mã nhúng Header / Footer' }));

@@ -1,11 +1,11 @@
 <%- include('partials/header') %>
 <div class="container page-wrap">
-  <nav class="breadcrumb"><a href="/">Trang chủ</a> / <% if (category) { %><a href="/danh-muc/<%= category.slug %>"><%= category.name %></a> / <% } %><span><%= product.name %></span></nav>
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Trang chủ</a> / <% trail.forEach(function (c) { %><a href="/danh-muc/<%= c.slug %>"><%= c.name %></a> / <% }) %><span aria-current="page"><%= product.name %></span></nav>
   <div class="product-detail">
     <div class="gallery">
-      <div class="main-img"><img id="mainImg" src="<%= product.thumb %>" alt="<%= product.name %>"></div>
+      <div class="main-img"><img id="mainImg" src="<%= product.thumb %>" alt="<%= product.name %><%= product.code ? ' - ' + product.code : '' %>" fetchpriority="high" decoding="async"></div>
       <% if (product.images.length > 1) { %>
-        <div class="thumbs"><% product.images.forEach(function(img, i){ %><img src="<%= img %>" class="<%= i===0?'active':'' %>" data-full="<%= img %>" alt=""><% }) %></div>
+        <div class="thumbs"><% product.images.forEach(function(img, i){ %><img src="<%= img %>" class="<%= i===0?'active':'' %>" data-full="<%= img %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" loading="lazy" decoding="async"><% }) %></div>
       <% } %>
     </div>
     <div class="info">

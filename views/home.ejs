@@ -1,12 +1,44 @@
 <%- include('partials/header') %>
 
-<section class="hero" style="background-image:url('<%= settings.hero_image %>')">
+<%# Banner dùng thẻ <img> thật (có alt, ưu tiên tải) thay cho ảnh nền CSS: tốt cho SEO & tốc độ LCP %>
+<% const heroStyle = '--hero-h: ' + (parseInt(settings.hero_height) || 78) + 'vh; --ov: ' + (parseInt(settings.hero_overlay) >= 0 ? parseInt(settings.hero_overlay) : 55) / 100; %>
+<% if (heroSlides.length) { %>
+<%# Slider: slide 1 tải ưu tiên + có h1 (mỗi trang 1 h1), các slide sau tải lười, tiêu đề dùng h2 %>
+<section class="hero hero-slider" style="<%= heroStyle %>" data-interval="<%= (parseInt(settings.hero_interval) || 5) * 1000 %>" aria-roledescription="carousel" aria-label="Banner">
+  <% heroSlides.forEach(function (sl, i) { const first = i === 0; %>
+  <div class="hero-slide<%= first ? ' is-active' : '' %>" role="group" aria-roledescription="slide" aria-label="<%= i + 1 %> / <%= heroSlides.length %>"<%= first ? '' : ' aria-hidden=true' %>>
+    <picture>
+      <% if (sl.image_mobile) { %><source media="(max-width: 720px)" srcset="<%= sl.image_mobile %>"><% } %>
+      <img class="hero-img" src="<%= sl.image %>" alt="<%= sl.alt || sl.title || settings.site_name %>" <%- first ? 'fetchpriority="high"' : 'loading="lazy"' %> decoding="async">
+    </picture>
+    <div class="hero-overlay">
+      <% if (first) { %><h1><%= sl.title || settings.hero_title || settings.site_name %></h1><% } else if (sl.title) { %><h2 class="hero-title"><%= sl.title %></h2><% } %>
+      <% if (sl.subtitle) { %><p><%= sl.subtitle %></p><% } %>
+      <% if (sl.button) { %><a class="btn btn-light" href="<%= sl.link || '/shop' %>"<%- first ? '' : ' tabindex="-1"' %>><%= sl.button %></a><% } %>
+    </div>
+  </div>
+  <% }) %>
+  <% if (heroSlides.length > 1) { %>
+  <button class="hero-nav prev" aria-label="Slide trước">‹</button>
+  <button class="hero-nav next" aria-label="Slide sau">›</button>
+  <div class="hero-dots"><% heroSlides.forEach(function (sl, i) { %><button aria-label="Xem slide <%= i + 1 %>"<%- i === 0 ? ' aria-current="true"' : '' %>></button><% }) %></div>
+  <% } %>
+</section>
+<% } else { %>
+<section class="hero" style="<%= heroStyle %>">
+  <% if (settings.hero_image) { %>
+  <picture>
+    <% if (settings.hero_image_mobile) { %><source media="(max-width: 720px)" srcset="<%= settings.hero_image_mobile %>"><% } %>
+    <img class="hero-img" src="<%= settings.hero_image %>" alt="<%= settings.hero_alt || settings.hero_title || settings.site_name %>" fetchpriority="high" decoding="async">
+  </picture>
+  <% } %>
   <div class="hero-overlay">
-    <h1><%= settings.hero_title %></h1>
-    <p><%= settings.hero_subtitle %></p>
-    <a class="btn btn-light" href="<%= settings.hero_link %>"><%= settings.hero_button %></a>
+    <h1><%= settings.hero_title || settings.site_name %></h1>
+    <% if (settings.hero_subtitle) { %><p><%= settings.hero_subtitle %></p><% } %>
+    <% if (settings.hero_button) { %><a class="btn btn-light" href="<%= settings.hero_link || '/shop' %>"><%= settings.hero_button %></a><% } %>
   </div>
 </section>
+<% } %>
 
 <%
 const sections = [

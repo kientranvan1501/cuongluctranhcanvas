@@ -45,6 +45,13 @@ Biến môi trường (tùy chọn):
 - **Người dùng**: tạo nhiều tài khoản với 2 quyền — *Quản trị* (toàn quyền) và *Chỉ xem đơn hàng* (chỉ xem danh sách / chi tiết đơn, không sửa, không xóa)
 - **Tài khoản**: đổi tên đăng nhập / mật khẩu của chính mình
 
+### SEO (chuẩn Google)
+- Mỗi trang có title, meta description riêng, `<link rel="canonical">`, Open Graph (chia sẻ Facebook/Zalo), `robots`
+- Dữ liệu có cấu trúc JSON-LD: `Organization` + `WebSite` (trang chủ), `Product` + `Offer`/`AggregateOffer` (sản phẩm), `BreadcrumbList` (danh mục, sản phẩm, trang)
+- `/sitemap.xml` (kèm ảnh sản phẩm) và `/robots.txt` tự sinh từ dữ liệu
+- Trang tìm kiếm, giỏ hàng, đặt hàng, 404 gắn `noindex`; trang phân trang không tồn tại trả 404; canonical bỏ tham số sắp xếp
+- **Khi đưa lên tên miền thật:** nhập *Địa chỉ website chính* tại **Cài đặt website → SEO trang chủ**, rồi khai báo `https://tenmien/sitemap.xml` trong Google Search Console
+
 ### Dán Google Tag Manager
 1. Vào **Quản trị → Mã Header / Footer**
 2. Đoạn `<script>` thứ nhất của GTM → ô **① head**

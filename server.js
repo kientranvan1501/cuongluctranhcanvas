@@ -21,10 +21,26 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 * 8 },
 }));
 
+// CSS/JS kèm ?v=<thời điểm sửa file>: trình duyệt được lưu cache lâu nhưng tự tải lại ngay khi file đổi
+const fs = require('fs');
+function asset(p) {
+  try { return p + '?v=' + Math.floor(fs.statSync(path.join(__dirname, 'public', p)).mtimeMs).toString(36); } catch (e) { return p; }
+}
+
 // Biến dùng chung cho mọi view
 app.use((req, res, next) => {
   const { smtp_pass, ...settings } = getSettings(); // không đưa mật khẩu SMTP ra view
   res.locals.settings = settings;
+  // ---- SEO: URL gốc tuyệt đối (ưu tiên "Địa chỉ website" trong Cài đặt), mô tả rút gọn, dữ liệu SEO mặc định
+  const siteUrl = String(settings.site_url || '').trim();
+  res.locals.baseUrl = (siteUrl ? (/^https?:\/\//i.test(siteUrl) ? siteUrl : 'https://' + siteUrl) : `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
+  res.locals.absUrl = (u) => !u ? '' : /^https?:\/\//i.test(u) ? u : res.locals.baseUrl + (u.startsWith('/') ? '' : '/') + u;
+  res.locals.plain = (html, n = 160) => {
+    const t = String(html || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    return t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : t;
+  };
+  res.locals.asset = asset;
+  res.locals.seo = {}; // từng route ghi đè: canonical, description, image, type, noindex, jsonld[]
   res.locals.formatPrice = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
   res.locals.currentPath = req.path;
   res.locals.flash = req.session.flash; delete req.session.flash;
@@ -46,7 +62,10 @@ app.use((req, res, next) => {
 app.use('/admin', require('./routes/admin'));
 app.use('/', require('./routes/shop'));
 
-app.use((req, res) => res.status(404).render('404', { title: 'Không tìm thấy trang' }));
+app.use((req, res) => {
+  res.locals.seo = { noindex: true, canonical: false };
+  res.status(404).render('404', { title: 'Không tìm thấy trang' });
+});
 app.use((err, req, res, next) => {
   console.error(err);
   res.status(500).send('Lỗi máy chủ: ' + (process.env.NODE_ENV === 'production' ? '' : err.message));

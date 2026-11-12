@@ -16,6 +16,54 @@
     car.querySelector('.next')?.addEventListener('click', () => track.scrollBy({ left: track.clientWidth }));
   });
 
+  // Banner slider trang chủ: tự chạy, dừng khi rê chuột/ẩn tab, vuốt trên điện thoại
+  document.querySelectorAll('.hero-slider').forEach((hero) => {
+    const slides = [...hero.querySelectorAll('.hero-slide')];
+    if (slides.length < 2) return;
+    const dots = [...hero.querySelectorAll('.hero-dots button')];
+    const delay = parseInt(hero.dataset.interval) || 5000;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let cur = 0, timer = null, paused = false;
+    function go(n) {
+      cur = (n + slides.length) % slides.length;
+      slides.forEach((s, i) => {
+        const on = i === cur;
+        s.classList.toggle('is-active', on);
+        s.toggleAttribute('aria-hidden', !on);
+        s.querySelectorAll('a').forEach((a) => (on ? a.removeAttribute('tabindex') : a.setAttribute('tabindex', '-1')));
+        if (on) s.querySelector('img[loading=lazy]')?.removeAttribute('loading');
+      });
+      dots.forEach((d, i) => (i === cur ? d.setAttribute('aria-current', 'true') : d.removeAttribute('aria-current')));
+      // tải trước ảnh slide kế tiếp để chuyển mượt
+      slides[(cur + 1) % slides.length].querySelector('img[loading=lazy]')?.removeAttribute('loading');
+      restart();
+    }
+    function restart() {
+      clearTimeout(timer);
+      if (!reduce && !paused && !document.hidden) timer = setTimeout(() => go(cur + 1), delay);
+    }
+    hero.querySelector('.prev').addEventListener('click', () => go(cur - 1));
+    hero.querySelector('.next').addEventListener('click', () => go(cur + 1));
+    dots.forEach((d, i) => d.addEventListener('click', () => go(i)));
+    const pause = (v) => { paused = v; restart(); };
+    hero.addEventListener('mouseenter', () => pause(true));
+    hero.addEventListener('mouseleave', () => pause(false));
+    hero.addEventListener('focusin', () => pause(true));
+    hero.addEventListener('focusout', () => pause(false));
+    document.addEventListener('visibilitychange', restart);
+    let x0 = null;
+    hero.addEventListener('touchstart', (e) => { x0 = e.touches[0].clientX; }, { passive: true });
+    hero.addEventListener('touchend', (e) => {
+      if (x0 === null) return;
+      const dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 40) go(cur + (dx < 0 ? 1 : -1));
+    });
+    // Sau khi trang tải xong mới tải ảnh các slide sau (không làm chậm lần hiển thị đầu)
+    const loadRest = () => hero.querySelectorAll('img[loading=lazy]').forEach((img) => img.removeAttribute('loading'));
+    if (document.readyState === 'complete') loadRest(); else window.addEventListener('load', loadRest);
+    restart();
+  });
+
   // Trang sản phẩm: ảnh + biến thể + thêm giỏ
   const mainImg = document.getElementById('mainImg');
   document.querySelectorAll('.thumbs img').forEach((t) => t.addEventListener('click', () => {

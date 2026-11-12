@@ -1,15 +1,38 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<%- settings.head_code || '' %>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title><%= title ? title + ' | ' + settings.site_name : (settings.meta_title || settings.site_name) %></title>
-<meta name="description" content="<%= typeof metaDesc !== 'undefined' && metaDesc ? metaDesc : settings.meta_desc %>">
+<%
+  const _title = title ? title + ' | ' + settings.site_name : (settings.meta_title || settings.site_name);
+  const _desc = plain((typeof metaDesc !== 'undefined' && metaDesc) || seo.description || settings.meta_desc, 160);
+  const _canon = seo.canonical === false ? '' : baseUrl + (seo.canonical || currentPath);
+  const _img = absUrl(seo.image || settings.hero_image || settings.logo);
+  const _ld = (seo.jsonld || []).filter(Boolean);
+%>
+<title><%= _title %></title>
+<meta name="description" content="<%= _desc %>">
+<% if (seo.noindex) { %><meta name="robots" content="noindex, follow">
+<% } else { %><meta name="robots" content="index, follow, max-image-preview:large">
+<% } %><% if (_canon) { %><link rel="canonical" href="<%= _canon %>">
+<% } %>
+<meta property="og:locale" content="vi_VN">
+<meta property="og:site_name" content="<%= settings.site_name %>">
+<meta property="og:type" content="<%= seo.type || 'website' %>">
+<meta property="og:title" content="<%= title || settings.meta_title || settings.site_name %>">
+<meta property="og:description" content="<%= _desc %>">
+<% if (_canon) { %><meta property="og:url" content="<%= _canon %>"><% } %>
+<% if (_img) { %><meta property="og:image" content="<%= _img %>"><% } %>
+<meta name="twitter:card" content="summary_large_image">
 <% if (settings.favicon) { %><link rel="icon" href="<%= settings.favicon %>"><% } %>
+<% if (seo.preloadImage) { %><link rel="preload" as="image" href="<%= seo.preloadImage %>" fetchpriority="high"><% } %>
+<% _ld.forEach(function (d) { %><script type="application/ld+json"><%- JSON.stringify(d).replace(/</g, '\\u003c') %></script>
+<% }) %>
+<%- settings.head_code || '' %>
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/style.css">
+<link rel="stylesheet" href="<%= asset('/css/style.css') %>">
 <% if (settings.custom_css) { %><style><%- settings.custom_css %></style><% } %>
 </head>
 <body>
@@ -21,7 +44,7 @@
   <div class="container header-inner">
     <button class="menu-toggle" aria-label="Menu" onclick="document.body.classList.toggle('nav-open')">☰</button>
     <a href="/" class="logo">
-      <% if (settings.logo) { %><img src="<%= settings.logo %>" alt="<%= settings.site_name %>"><% } else { %><span><%= settings.site_name %></span><% } %>
+      <% if (settings.logo) { %><img src="<%= settings.logo %>" alt="<%= settings.site_name %>" style="height: <%= parseInt(settings.logo_height) || 48 %>px"><% } else { %><span><%= settings.site_name %></span><% } %>
     </a>
     <nav class="main-nav">
       <ul>

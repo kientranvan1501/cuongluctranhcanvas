@@ -29,12 +29,29 @@
   <div class="copyright">© <%= new Date().getFullYear() %>, <%= settings.site_name %></div>
 </footer>
 
+<%
+  // Zalo: dùng giá trị cài đặt (số hoặc link), nếu trống/"#" thì dùng số hotline
+  const _tel = (settings.hotline || '').replace(/\D/g, '');
+  const _z = (settings.zalo || '').trim();
+  const _zaloUrl = /^https?:\/\//.test(_z) ? _z : (_z && _z !== '#' ? 'https://zalo.me/' + _z.replace(/\D/g, '') : (_tel ? 'https://zalo.me/' + _tel : ''));
+%>
 <div class="float-btns">
-  <% if (settings.zalo) { %><a class="fb-zalo" href="https://zalo.me/<%= settings.zalo %>" target="_blank" rel="noopener">Zalo</a><% } %>
-  <a class="fb-phone" href="tel:<%= (settings.hotline||'').replace(/\D/g,'') %>" aria-label="Gọi">✆</a>
+  <% if (_zaloUrl) { %>
+  <a class="fb-btn fb-zalo" href="<%= _zaloUrl %>" target="_blank" rel="noopener nofollow" aria-label="Chat Zalo" title="Chat Zalo">
+    <svg viewBox="0 0 40 40" width="38" height="38" aria-hidden="true">
+      <path d="M8 6h24a5 5 0 0 1 5 5v14a5 5 0 0 1-5 5H17l-7.5 5.5 1.2-5.5H8a5 5 0 0 1-5-5V11a5 5 0 0 1 5-5z" fill="none" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/>
+      <text x="20" y="22.5" text-anchor="middle" fill="#fff" font-family="Arial, sans-serif" font-size="10" font-weight="700">Zalo</text>
+    </svg>
+  </a>
+  <% } %>
+  <% if (_tel) { %>
+  <a class="fb-btn fb-phone" href="tel:<%= _tel %>" aria-label="Gọi hotline <%= settings.hotline %>" title="Gọi <%= settings.hotline %>">
+    <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="#fff" d="M6.6 10.8a15.2 15.2 0 0 0 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1A17 17 0 0 1 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1z"/></svg>
+  </a>
+  <% } %>
 </div>
 
-<script src="/js/main.js"></script>
+<script src="<%= asset('/js/main.js') %>"></script>
 <%- settings.footer_code || '' %>
 </body>
 </html>

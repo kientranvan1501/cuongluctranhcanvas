@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title><%= title %> - Quản trị</title>
-<link rel="stylesheet" href="/css/admin.css">
+<link rel="stylesheet" href="<%= asset('/css/admin.css') %>">
 </head>
 <body>
 <aside class="sidebar">
@@ -20,6 +20,7 @@
     <% if (isAdmin) { %>
     <a href="/admin/leads" class="<%= currentPath.startsWith('/leads') ? 'active' : '' %>">🎁 Đăng ký ưu đãi</a>
     <a href="/admin/pages" class="<%= currentPath.startsWith('/pages') ? 'active' : '' %>">📄 Trang nội dung</a>
+    <a href="/admin/branding" class="<%= currentPath.startsWith('/branding') ? 'active' : '' %>">🎨 Logo &amp; Banner</a>
     <a href="/admin/settings" class="<%= currentPath.startsWith('/settings') ? 'active' : '' %>">⚙️ Cài đặt website</a>
     <a href="/admin/mail" class="<%= currentPath.startsWith('/mail') ? 'active' : '' %>">✉️ Cấu hình email</a>
     <a href="/admin/code" class="<%= currentPath.startsWith('/code') ? 'active' : '' %>">&lt;/&gt; Mã Header / Footer</a>

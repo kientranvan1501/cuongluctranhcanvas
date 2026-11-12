@@ -1,0 +1,277 @@
+<%- include('_head') %>
+<%
+  // Ô chọn ảnh dùng chung: xem ảnh hiện tại, kéo-thả / chọn file mới (xem trước ngay), nhập URL, xóa ảnh
+  function imageField(key, fileField, label, hint, kind, val, removeName) {
+    if (val === undefined) val = settings[key] || '';
+    removeName = removeName || 'remove_' + key;
+%>
+  <div class="img-field" data-kind="<%= kind %>">
+    <div class="img-field-head"><strong><%= label %></strong><% if (hint) { %><small><%= hint %></small><% } %></div>
+    <label class="dropzone <%= val ? 'has-img' : '' %>">
+      <input type="file" name="<%= fileField %>" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif,image/x-icon">
+      <img class="dz-img" src="<%= val %>" alt="" <%= val ? '' : 'hidden' %>>
+      <span class="dz-empty">⬆ Kéo ảnh vào đây hoặc <u>bấm để chọn</u></span>
+      <span class="dz-change">Đổi ảnh</span>
+    </label>
+    <div class="img-field-foot">
+      <span class="dz-status muted"><%= val ? 'Đang dùng: ' + val.split('/').pop() : 'Chưa có ảnh' %></span>
+      <% if (val) { %><label class="check dz-remove"><input type="checkbox" name="<%= removeName %>"> Xóa ảnh</label><% } %>
+    </div>
+    <details class="dz-url"><summary>Hoặc dán link ảnh</summary>
+      <input name="<%= key %>" value="<%= val %>" placeholder="https://...">
+    </details>
+  </div>
+<% } %>
+
+<form method="post" enctype="multipart/form-data" class="form-grid branding">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="col-main">
+
+    <div class="card">
+      <h3>Logo</h3>
+      <div class="header-mock" id="headerMock">
+        <span class="hm-menu">☰</span>
+        <span class="hm-logo">
+          <img id="logoMockImg" src="<%= settings.logo %>" alt="" style="height: <%= settings.logo_height || 48 %>px" <%= settings.logo ? '' : 'hidden' %>>
+          <span id="logoMockText" <%= settings.logo ? 'hidden' : '' %>><%= settings.site_name %></span>
+        </span>
+        <span class="hm-nav">Shop &nbsp; Tranh Canvas &nbsp; Bộ Sưu Tập</span>
+        <span class="hm-cart">🛒</span>
+      </div>
+      <div class="row">
+        <% imageField('logo', 'logo_file', 'Ảnh logo', 'PNG/SVG nền trong suốt, cao tối thiểu 96px. Không có logo thì hiện tên website.', 'logo') %>
+        <div>
+          <label>Chiều cao logo trên website: <output id="logoHOut"><%= settings.logo_height || 48 %></output>px
+            <input type="range" name="logo_height" id="logoH" min="24" max="90" value="<%= settings.logo_height || 48 %>">
+          </label>
+          <% imageField('favicon', 'favicon_file', 'Favicon (biểu tượng trên tab trình duyệt)', 'Ảnh vuông, PNG 512×512 hoặc .ico', 'favicon') %>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Banner trang chủ</h3>
+      <% const mode = settings.hero_mode === 'slider' ? 'slider' : 'static';
+         let slides = []; try { slides = JSON.parse(settings.hero_slides || '[]'); } catch (e) {}
+         function slideCard(s, id) { %>
+        <div class="slide-card" data-id="<%= id %>">
+          <input type="hidden" name="slide_id" value="<%= id %>">
+          <div class="slide-head">
+            <strong class="slide-no">Slide</strong>
+            <span class="slide-tools">
+              <button type="button" class="icon-btn" data-act="up" title="Đưa lên">↑</button>
+              <button type="button" class="icon-btn" data-act="down" title="Đưa xuống">↓</button>
+              <button type="button" class="icon-btn danger" data-act="del" title="Xóa slide">✕</button>
+            </span>
+          </div>
+          <div class="row">
+            <% imageField('slide_image_' + id, 'slide_file_' + id, 'Ảnh máy tính', '1920×800px', 'slide', s.image || '', 'slide_remove_image_' + id) %>
+            <% imageField('slide_image_mobile_' + id, 'slide_mfile_' + id, 'Ảnh điện thoại (tùy chọn)', '~800×1000px', 'slide-mobile', s.image_mobile || '', 'slide_remove_image_mobile_' + id) %>
+          </div>
+          <label>Mô tả ảnh (alt — cho Google)<input name="slide_alt_<%= id %>" value="<%= s.alt || '' %>" maxlength="125"></label>
+          <div class="row">
+            <label>Tiêu đề lớn<input class="s-title" name="slide_title_<%= id %>" value="<%= s.title || '' %>"></label>
+            <label>Dòng phụ<input class="s-sub" name="slide_subtitle_<%= id %>" value="<%= s.subtitle || '' %>"></label>
+          </div>
+          <div class="row">
+            <label>Chữ trên nút<small>Để trống = ẩn nút</small><input class="s-btn" name="slide_button_<%= id %>" value="<%= s.button || '' %>"></label>
+            <label>Link nút<small>Ví dụ /shop</small><input name="slide_link_<%= id %>" value="<%= s.link || '' %>"></label>
+          </div>
+        </div>
+      <% } %>
+
+      <div class="mode-switch" role="radiogroup" aria-label="Kiểu banner">
+        <label><input type="radio" name="hero_mode" value="static" <%= mode === 'static' ? 'checked' : '' %>><span><b>🖼 Banner tĩnh</b><small>1 ảnh cố định</small></span></label>
+        <label><input type="radio" name="hero_mode" value="slider" <%= mode === 'slider' ? 'checked' : '' %>><span><b>🎞 Slider</b><small>Nhiều ảnh tự chuyển</small></span></label>
+      </div>
+
+      <div class="hero-mock" id="heroMock" style="--ov: <%= (settings.hero_overlay || 55) / 100 %>">
+        <img id="heroMockImg" src="" alt="" hidden>
+        <div class="hm-overlay">
+          <div class="hm-title" id="pvTitle"></div>
+          <div class="hm-sub" id="pvSub"></div>
+          <span class="hm-btn" id="pvBtn"></span>
+        </div>
+        <span class="hm-badge" id="pvBadge" hidden></span>
+      </div>
+      <p class="muted small-note">Xem trước — thay đổi hiển thị ngay khi bạn chọn ảnh hoặc gõ chữ<span data-show="slider" hidden> (đang xem slide bạn vừa chỉnh)</span>, bấm <b>Lưu</b> để áp dụng lên website.</p>
+
+      <div data-show="static">
+        <div class="row">
+          <% imageField('hero_image', 'hero_file', 'Ảnh banner máy tính', 'Ảnh ngang, khuyên dùng 1920×800px, JPG/WebP dưới 500KB', 'hero') %>
+          <% imageField('hero_image_mobile', 'hero_mobile_file', 'Ảnh banner điện thoại (tùy chọn)', 'Ảnh dọc ~800×1000px. Để trống = dùng ảnh máy tính', 'hero-mobile') %>
+        </div>
+        <label>Mô tả ảnh banner (alt — cho Google)
+          <small>Mô tả ngắn nội dung ảnh, có từ khóa. Ví dụ: "Tranh canvas phong cảnh treo phòng khách hiện đại"</small>
+          <input name="hero_alt" value="<%= settings.hero_alt %>" maxlength="125"></label>
+        <div class="row">
+          <label>Tiêu đề lớn<input name="hero_title" id="inTitle" value="<%= settings.hero_title %>"></label>
+          <label>Dòng phụ<input name="hero_subtitle" id="inSub" value="<%= settings.hero_subtitle %>"></label>
+        </div>
+        <div class="row">
+          <label>Chữ trên nút<small>Để trống = ẩn nút</small><input name="hero_button" id="inBtn" value="<%= settings.hero_button %>"></label>
+          <label>Link nút<small>Ví dụ /shop hoặc /danh-muc/tranh-canvas</small><input name="hero_link" value="<%= settings.hero_link %>"></label>
+        </div>
+      </div>
+
+      <div data-show="slider" hidden>
+        <label>Thời gian mỗi slide: <output id="itOut"><%= settings.hero_interval || 5 %></output> giây
+          <input type="range" name="hero_interval" id="it" min="3" max="15" value="<%= settings.hero_interval || 5 %>"></label>
+        <div id="slideList">
+          <% slides.forEach(function (s, i) { slideCard(s, 's' + i); }) %>
+        </div>
+        <p class="muted small-note" id="slideEmpty" hidden>Chưa có slide nào. Bấm “Thêm slide” để bắt đầu.</p>
+        <button type="button" class="btn btn-gray" id="addSlide">＋ Thêm slide</button>
+        <p class="muted small-note">Nên dùng 2–5 slide. Slide không có ảnh sẽ bị bỏ qua khi lưu. Tiêu đề slide đầu tiên là thẻ H1 của trang chủ (quan trọng cho SEO).</p>
+        <template id="slideTpl"><% slideCard({}, '__ID__') %></template>
+      </div>
+
+      <div class="row hr-top">
+        <label>Độ tối lớp phủ (giúp chữ dễ đọc): <output id="ovOut"><%= settings.hero_overlay || 55 %></output>%
+          <input type="range" name="hero_overlay" id="ov" min="0" max="85" value="<%= settings.hero_overlay || 55 %>"></label>
+        <label>Chiều cao banner (máy tính): <output id="hhOut"><%= settings.hero_height || 78 %></output>% màn hình
+          <input type="range" name="hero_height" id="hh" min="40" max="100" value="<%= settings.hero_height || 78 %>"></label>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-side">
+    <div class="card">
+      <button class="btn full">💾 Lưu logo &amp; banner</button>
+      <a class="btn btn-gray full" href="/" target="_blank" style="margin-top:8px">↗ Xem trang chủ</a>
+    </div>
+    <div class="card">
+      <h3>Mẹo</h3>
+      <ul class="tips">
+        <li>Nén ảnh trước khi tải (tinypng.com, squoosh.app) để web nhanh — tốt cho SEO.</li>
+        <li>Đặt tên file có nghĩa, ví dụ <code>tranh-canvas-phong-khach.jpg</code>.</li>
+        <li>Giữ phần chữ quan trọng của ảnh ở giữa để không bị cắt trên điện thoại.</li>
+      </ul>
+    </div>
+  </div>
+</form>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var form = document.querySelector('form.branding'), list = $('slideList'), activeCard = null;
+  var modeOf = function () { return form.querySelector('[name=hero_mode]:checked').value; };
+
+  // ---- Xem trước banner: lấy từ banner tĩnh hoặc từ slide đang chỉnh ----
+  function setMock(src, title, sub, btn) {
+    $('heroMockImg').src = src || ''; $('heroMockImg').hidden = !src;
+    [['pvTitle', title], ['pvSub', sub], ['pvBtn', btn]].forEach(function (p) { $(p[0]).textContent = p[1] || ''; $(p[0]).hidden = !p[1]; });
+  }
+  function refreshMock() {
+    var cards = list.querySelectorAll('.slide-card');
+    if (modeOf() !== 'slider') {
+      var img = document.querySelector('.img-field[data-kind=hero] .dz-img');
+      setMock(img.hidden ? '' : img.src, $('inTitle').value, $('inSub').value, $('inBtn').value);
+      $('pvBadge').hidden = true; return;
+    }
+    if (!activeCard || !activeCard.isConnected) activeCard = cards[0] || null;
+    if (!activeCard) { setMock('', '', '', ''); $('pvBadge').hidden = true; return; }
+    var si = activeCard.querySelector('.img-field[data-kind=slide] .dz-img');
+    setMock(si.hidden ? '' : si.src, activeCard.querySelector('.s-title').value, activeCard.querySelector('.s-sub').value, activeCard.querySelector('.s-btn').value);
+    cards.forEach(function (c) { c.classList.toggle('is-active', c === activeCard); });
+    $('pvBadge').textContent = 'Slide ' + ([].indexOf.call(cards, activeCard) + 1) + ' / ' + cards.length; $('pvBadge').hidden = false;
+  }
+
+  // ---- Ô ảnh: chọn / kéo-thả file -> xem trước ngay ----
+  function bindImageField(box) {
+    var zone = box.querySelector('.dropzone'), input = zone.querySelector('input[type=file]'),
+        img = zone.querySelector('.dz-img'), status = box.querySelector('.dz-status'),
+        remove = box.querySelector('.dz-remove input'), url = box.querySelector('.dz-url input'), kind = box.dataset.kind;
+    function show(src, text) {
+      img.src = src || ''; img.hidden = !src; zone.classList.toggle('has-img', !!src);
+      if (text !== undefined) status.textContent = text;
+      if (kind === 'logo') { $('logoMockImg').src = src || ''; $('logoMockImg').hidden = !src; $('logoMockText').hidden = !!src; }
+      if (kind === 'hero' || kind === 'slide') refreshMock();
+    }
+    input.addEventListener('change', function () {
+      var file = input.files[0]; if (!file) return;
+      if (file.size > 8 * 1024 * 1024) { alert('Ảnh quá lớn (tối đa 8MB)'); input.value = ''; return; }
+      if (remove) remove.checked = false;
+      show(URL.createObjectURL(file), 'Ảnh mới: ' + file.name + ' (' + Math.round(file.size / 1024) + 'KB) — bấm Lưu để áp dụng');
+    });
+    ['dragenter', 'dragover'].forEach(function (e) { zone.addEventListener(e, function (ev) { ev.preventDefault(); zone.classList.add('drag'); }); });
+    ['dragleave', 'drop'].forEach(function (e) { zone.addEventListener(e, function () { zone.classList.remove('drag'); }); });
+    zone.addEventListener('drop', function (ev) {
+      ev.preventDefault();
+      if (ev.dataTransfer.files.length) { input.files = ev.dataTransfer.files; input.dispatchEvent(new Event('change')); }
+    });
+    if (remove) remove.addEventListener('change', function () {
+      if (remove.checked) { input.value = ''; show('', 'Ảnh sẽ bị xóa khi bấm Lưu'); }
+      else show(url.value, 'Đang dùng: ' + url.value.split('/').pop());
+    });
+    url.addEventListener('input', function () { show(url.value.trim(), url.value ? 'Dùng ảnh từ link' : 'Chưa có ảnh'); });
+  }
+  document.querySelectorAll('.img-field').forEach(bindImageField); // ô trong <template> không nằm trong DOM nên không bị chọn
+
+  // ---- Slider: thêm / xóa / sắp xếp slide ----
+  function renumber() {
+    var cards = list.querySelectorAll('.slide-card');
+    cards.forEach(function (c, i) {
+      c.querySelector('.slide-no').textContent = 'Slide ' + (i + 1) + (i === 0 ? ' — hiện đầu tiên' : '');
+      c.querySelector('[data-act=up]').disabled = i === 0;
+      c.querySelector('[data-act=down]').disabled = i === cards.length - 1;
+    });
+    $('slideEmpty').hidden = cards.length > 0;
+    refreshMock();
+  }
+  function addSlide(data) {
+    var id = 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    var wrap = document.createElement('div');
+    wrap.innerHTML = $('slideTpl').innerHTML.replace(/__ID__/g, id);
+    var card = wrap.firstElementChild; list.appendChild(card);
+    card.querySelectorAll('.img-field').forEach(bindImageField);
+    activeCard = card;
+    if (data) {
+      ['title', 'sub', 'btn'].forEach(function (k) { if (data[k]) card.querySelector('.s-' + k).value = data[k]; });
+      if (data.link) card.querySelector('[name^=slide_link_]').value = data.link;
+      if (data.alt) card.querySelector('[name^=slide_alt_]').value = data.alt;
+      var u = card.querySelector('.img-field[data-kind=slide] .dz-url input');
+      if (data.image) { u.value = data.image; u.dispatchEvent(new Event('input')); }
+    }
+    renumber();
+    return card;
+  }
+  $('addSlide').addEventListener('click', function () {
+    addSlide().scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  list.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-act]'); if (!b) return;
+    var card = b.closest('.slide-card');
+    if (b.dataset.act === 'del') { if (!confirm('Xóa slide này?')) return; card.remove(); }
+    if (b.dataset.act === 'up' && card.previousElementSibling) list.insertBefore(card, card.previousElementSibling);
+    if (b.dataset.act === 'down' && card.nextElementSibling) list.insertBefore(card.nextElementSibling, card);
+    renumber();
+  });
+  list.addEventListener('focusin', function (e) { var c = e.target.closest('.slide-card'); if (c && c !== activeCard) { activeCard = c; refreshMock(); } });
+  list.addEventListener('input', function (e) { activeCard = e.target.closest('.slide-card'); refreshMock(); });
+
+  // ---- Đổi chế độ tĩnh / slider ----
+  function applyMode() {
+    var m = modeOf();
+    document.querySelectorAll('[data-show]').forEach(function (el) { el.hidden = el.dataset.show !== m; });
+    // Lần đầu bật slider: tạo sẵn slide 1 từ banner tĩnh hiện tại
+    if (m === 'slider' && !list.children.length) {
+      addSlide({ image: document.querySelector('.img-field[data-kind=hero] .dz-url input').value,
+        title: $('inTitle').value, sub: $('inSub').value, btn: $('inBtn').value,
+        link: form.querySelector('[name=hero_link]').value, alt: form.querySelector('[name=hero_alt]').value });
+    }
+    refreshMock();
+  }
+  form.querySelectorAll('[name=hero_mode]').forEach(function (r) { r.addEventListener('change', applyMode); });
+
+  // ---- Thanh trượt + chữ banner tĩnh ----
+  $('logoH').addEventListener('input', function () { $('logoHOut').textContent = this.value; $('logoMockImg').style.height = this.value + 'px'; });
+  $('ov').addEventListener('input', function () { $('ovOut').textContent = this.value; $('heroMock').style.setProperty('--ov', this.value / 100); });
+  $('hh').addEventListener('input', function () { $('hhOut').textContent = this.value; });
+  $('it').addEventListener('input', function () { $('itOut').textContent = this.value; });
+  ['inTitle', 'inSub', 'inBtn'].forEach(function (id) { $(id).addEventListener('input', refreshMock); });
+
+  renumber(); applyMode();
+})();
+</script>
+<%- include('_foot') %>

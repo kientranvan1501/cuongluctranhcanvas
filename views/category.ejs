@@ -1,7 +1,9 @@
 <%- include('partials/header') %>
 <div class="container page-wrap">
-  <nav class="breadcrumb"><a href="/">Trang chủ</a> / <span><%= title %></span></nav>
-  <h1 class="page-title"><%= title %></h1>
+  <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Trang chủ</a> /
+    <% trail.slice(0, -1).forEach(function (c) { %><a href="/danh-muc/<%= c.slug %>"><%= c.name %></a> / <% }) %>
+    <span aria-current="page"><%= heading %></span></nav>
+  <h1 class="page-title"><%= heading %></h1>
   <% if (subcats.length) { %>
     <div class="chips"><% subcats.forEach(function(s){ %><a href="/danh-muc/<%= s.slug %>"><%= s.name %></a><% }) %></div>
   <% } %>
@@ -23,7 +25,9 @@
   <% if (pages > 1) { %>
     <div class="pagination">
       <% for (let i = 1; i <= pages; i++) { %>
-        <a class="<%= i===page?'active':'' %>" href="?<%= q ? 'q='+encodeURIComponent(q)+'&' : '' %>sort=<%= sort %>&page=<%= i %>"><%= i %></a>
+        <%# Link phân trang sạch: trang 1 không có ?page, chỉ thêm sort khi khác mặc định %>
+        <% const _qs = [q ? 'q=' + encodeURIComponent(q) : '', sort !== 'new' ? 'sort=' + sort : '', i > 1 ? 'page=' + i : ''].filter(Boolean).join('&'); %>
+        <a class="<%= i===page?'active':'' %>" href="<%= currentPath %><%= _qs ? '?' + _qs : '' %>" <%- i===page ? 'aria-current="page"' : '' %>><%= i %></a>
       <% } %>
     </div>
   <% } %>
