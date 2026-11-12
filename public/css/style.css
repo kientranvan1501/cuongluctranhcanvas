@@ -33,10 +33,11 @@ img { max-width: 100%; display: block; }
 .site-header { position: sticky; top: 0; z-index: 50; background: #fff; border-bottom: 1px solid var(--line); }
 .header-inner { display: flex; align-items: center; gap: 24px; height: 72px; }
 .logo img { max-height: 90px; width: auto; display: block; }
-.logo span { font: 700 24px var(--serif); letter-spacing: .5px; }
+.logo { flex-shrink: 0; }
+.logo span { display: block; font: 700 22px/1.08 var(--serif); letter-spacing: .3px; max-width: 180px; } /* tên dài tự xuống 2 dòng gọn gàng */
 .menu-toggle { display: none; background: none; border: 0; font-size: 24px; cursor: pointer; }
 .main-nav { flex: 1; }
-.main-nav > ul { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; justify-content: center; flex-wrap: wrap; }
+.main-nav > ul { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; justify-content: center; flex-wrap: nowrap; white-space: nowrap; }
 .main-nav > ul > li { position: relative; }
 .main-nav > ul > li > a { display: block; padding: 24px 10px; font-weight: 500; font-size: 14px; }
 .main-nav > ul > li > a:hover { color: var(--accent); }
@@ -201,6 +202,11 @@ img { max-width: 100%; display: block; }
 @media (max-width: 720px) { .float-btns { right: 16px; bottom: 16px; gap: 22px; } .fb-btn { width: 50px; height: 50px; } }
 
 /* Responsive */
+@media (min-width: 1025px) and (max-width: 1240px) {
+  .header-inner { gap: 16px; }
+  .main-nav > ul > li > a { padding: 24px 7px; font-size: 13.5px; }
+  .search-form input { width: 140px; }
+}
 @media (max-width: 1024px) {
   .menu-toggle { display: block; }
   .main-nav { display: none; position: fixed; inset: 108px 0 0 0; background: #fff; overflow-y: auto; padding: 8px 16px 40px; }
@@ -209,6 +215,7 @@ img { max-width: 100%; display: block; }
   .main-nav > ul > li > a { padding: 12px 0; border-bottom: 1px solid var(--line); }
   .submenu, .mega > .submenu { position: static; display: flex; flex-wrap: wrap; gap: 16px; box-shadow: none; transform: none; width: auto; border: 0; padding: 8px 0 8px 12px; }
   .logo { flex: 1; text-align: center; }
+  .logo span { max-width: none; }
   .search-form input { width: 120px; }
   .car-track { grid-auto-columns: calc((100% - 20px) / 2.3); }
   .product-grid, .cat-grid { grid-template-columns: repeat(3, 1fr); }
@@ -290,3 +297,4 @@ img { max-width: 100%; display: block; }
   .rich .promo-title { font-size: 26px; }
 }
 @media (max-width: 720px) { .logo img { max-height: 42px; margin: 0 auto; } }
+@media (max-width: 400px) { .logo span { font-size: 18px; } }

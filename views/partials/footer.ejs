@@ -3,10 +3,11 @@
   <div class="container footer-grid">
     <div>
       <h4><%= settings.company_name %></h4>
-      <p><%= settings.company_info %></p>
-      <p>Hotline: <a href="tel:<%= (settings.hotline||'').replace(/\D/g,'') %>"><%= settings.hotline %></a></p>
-      <p>Email: <a href="mailto:<%= settings.email %>"><%= settings.email %></a></p>
-      <p>Showroom: <%= settings.address %></p>
+      <% if (settings.company_info) { %><p><%= settings.company_info %></p><% } %>
+      <% if (settings.hotline) { %><p>Hotline: <a href="tel:<%= (settings.hotline||'').replace(/\D/g,'') %>"><%= settings.hotline %></a></p><% } %>
+      <% const _zf = (settings.zalo || '').trim(); if (_zf && _zf !== '#') { %><p>Zalo: <a href="<%= /^https?:\/\//.test(_zf) ? _zf : 'https://zalo.me/' + _zf.replace(/\D/g, '') %>" target="_blank" rel="noopener nofollow"><%= /^https?:\/\//.test(_zf) ? 'Chat Zalo' : _zf.replace(/\D/g, '').replace(/^(\d{4})(\d{3})(\d+)$/, '$1 $2 $3') %></a></p><% } %>
+      <% if (settings.email) { %><p>Email: <a href="mailto:<%= settings.email %>"><%= settings.email %></a></p><% } %>
+      <% if (settings.address) { %><p>Địa chỉ: <%= settings.address %></p><% } %>
     </div>
     <div>
       <h4>Về <%= settings.site_name %></h4>
@@ -20,9 +21,8 @@
       <h4>Các Chính Sách</h4>
       <ul><% footerPages.forEach(function(p){ %><li><a href="/trang/<%= p.slug %>"><%= p.title %></a></li><% }) %></ul>
       <div class="socials">
-        <% if (settings.facebook) { %><a href="<%= settings.facebook %>" target="_blank" rel="noopener">Facebook</a><% } %>
-        <% if (settings.instagram) { %><a href="<%= settings.instagram %>" target="_blank" rel="noopener">Instagram</a><% } %>
-        <% if (settings.youtube) { %><a href="<%= settings.youtube %>" target="_blank" rel="noopener">YouTube</a><% } %>
+        <%# Chỉ hiện mạng xã hội đã điền link thật (bỏ trống hoặc "#" thì ẩn) %>
+        <% [['facebook', 'Facebook'], ['instagram', 'Instagram'], ['youtube', 'YouTube']].forEach(function (s) { if (/^https?:\/\//.test(settings[s[0]] || '')) { %><a href="<%= settings[s[0]] %>" target="_blank" rel="noopener"><%= s[1] %></a><% } }) %>
       </div>
     </div>
   </div>
