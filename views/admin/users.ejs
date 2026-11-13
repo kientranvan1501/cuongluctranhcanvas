@@ -1,20 +1,19 @@
 <%- include('_head') %>
-<div class="card">
-  <div class="card-head"><p class="muted">Tài khoản <b>Chỉ xem đơn hàng</b> chỉ thấy mục Đơn hàng: xem danh sách và chi tiết, không sửa / xóa được.</p><a class="btn btn-sm" href="/admin/users/new">+ Thêm người dùng</a></div>
-  <div class="table-wrap">
+<div class="card flush">
+  <div class="card-head"><p class="muted">Tài khoản <b>Chỉ xem đơn hàng</b> chỉ thấy mục Đơn hàng: xem danh sách và chi tiết, không sửa / xóa được.</p><a class="btn btn-sm" href="/admin/users/new"><%- icon('plus') %>Thêm người dùng</a></div>
+  <div class="table-wrap" style="margin-top:16px">
   <table class="table">
-    <thead><tr><th>Tên đăng nhập</th><th>Họ tên</th><th>Quyền</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr></thead>
+    <thead><tr><th>Người dùng</th><th>Quyền</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr></thead>
     <tbody>
       <% users.forEach(function(u){ %>
         <tr>
-          <td><a href="/admin/users/<%= u.id %>/edit"><%= u.username %></a><% if (u.id === user.id) { %> <span class="muted">(bạn)</span><% } %></td>
-          <td><%= u.name %></td>
-          <td><%= ROLES[u.role] || u.role %></td>
-          <td><%= u.active ? 'Hoạt động' : 'Đã khóa' %></td>
-          <td><%= u.created_at %></td>
+          <td><div class="person"><span class="avatar"><%= (u.name || u.username).trim()[0] %></span><div><a href="/admin/users/<%= u.id %>/edit"><b><%= u.name || u.username %></b></a><small><%= u.username %><% if (u.id === user.id) { %> · bạn<% } %></small></div></div></td>
+          <td><span class="badge tone-<%= u.role === 'admin' ? 'violet' : 'blue' %>"><%= ROLES[u.role] || u.role %></span></td>
+          <td><span class="badge tone-<%= u.active ? 'green' : 'red' %>"><%= u.active ? 'Hoạt động' : 'Đã khóa' %></span></td>
+          <td class="muted small"><%= fmtDate(u.created_at, false) %></td>
           <td class="actions">
-            <a class="btn btn-sm btn-gray" href="/admin/users/<%= u.id %>/edit">Sửa</a>
-            <% if (u.id !== user.id) { %><form method="post" action="/admin/users/<%= u.id %>/delete" data-confirm="Xóa người dùng <%= u.username %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form><% } %>
+            <a class="btn btn-sm btn-gray" href="/admin/users/<%= u.id %>/edit"><%- icon('edit') %>Sửa</a>
+            <% if (u.id !== user.id) { %><form method="post" action="/admin/users/<%= u.id %>/delete" data-confirm="Xóa người dùng <%= u.username %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-ghost danger" title="Xóa" aria-label="Xóa"><%- icon('trash') %></button></form><% } %>
           </td>
         </tr>
       <% }) %>

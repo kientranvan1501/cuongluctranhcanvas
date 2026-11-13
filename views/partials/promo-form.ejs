@@ -27,15 +27,13 @@
       <% if (_msg) { %><div class="promo-alert"><%= _msg.msg %></div><% } %>
       <form class="promo-form" method="post" action="/dang-ky-uu-dai">
         <input type="hidden" name="source" value="<%= typeof page !== 'undefined' && page ? page.slug : '' %>">
-        <div class="hp" aria-hidden="true"><input name="website" tabindex="-1" autocomplete="off"></div>
+        <div class="hp" aria-hidden="true"><input name="pf_hp_x7" tabindex="-1" autocomplete="off" value=""></div>
         <div class="pf-row">
           <label class="pf-field"><span>Họ và tên <i>*</i></span>
             <input name="name" placeholder="Nguyễn Văn A" required maxlength="100" autocomplete="name"></label>
           <label class="pf-field"><span>Số điện thoại / Zalo <i>*</i></span>
             <input name="phone" type="tel" placeholder="09xx xxx xxx" required pattern="[0-9 .+]{8,15}" maxlength="20" autocomplete="tel"></label>
         </div>
-        <label class="pf-field"><span>Email</span>
-          <input name="email" type="email" placeholder="email@example.com" maxlength="120" autocomplete="email"></label>
         <div class="pf-field">
           <span>Bạn muốn treo tranh ở đâu?</span>
           <div class="pf-chips">

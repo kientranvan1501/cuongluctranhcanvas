@@ -12,7 +12,7 @@
     <select name="role"><% Object.keys(ROLES).forEach(function(k){ %><option value="<%= k %>" <%= u.role === k ? 'selected' : '' %>><%= ROLES[k] %></option><% }) %></select>
   </label>
   <label class="check"><input type="checkbox" name="active" <%= u.active ? 'checked' : '' %>> Cho phép đăng nhập</label>
-  <button class="btn">💾 Lưu</button>
+  <button class="btn"><%- icon('check') %>Lưu</button>
   <a class="btn btn-gray" href="/admin/users">Hủy</a>
 </form>
 <%- include('_foot') %>

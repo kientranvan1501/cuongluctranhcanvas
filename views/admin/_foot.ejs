@@ -5,6 +5,25 @@
   document.querySelectorAll('form[data-confirm]').forEach(function (f) {
     f.addEventListener('submit', function (e) { if (!confirm(f.dataset.confirm)) e.preventDefault(); });
   });
+  // Menu trên điện thoại
+  (function () {
+    var btn = document.getElementById('menuBtn'), scrim = document.getElementById('scrim');
+    function set(open) { document.body.classList.toggle('nav-open', open); btn && btn.setAttribute('aria-expanded', open); }
+    btn && btn.addEventListener('click', function () { set(!document.body.classList.contains('nav-open')); });
+    scrim && scrim.addEventListener('click', function () { set(false); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') set(false); });
+  })();
+  // Thông báo thành công tự ẩn sau 4 giây
+  document.querySelectorAll('.alert-success.fade').forEach(function (a) {
+    setTimeout(function () { a.classList.add('out'); setTimeout(function () { a.remove(); }, 450); }, 4000);
+  });
+  // Ô chọn trạng thái: đổi màu ngay khi chọn rồi tự lưu
+  document.querySelectorAll('select.status-select').forEach(function (s) {
+    s.addEventListener('change', function () {
+      s.className = s.className.replace(/tone-\w+/, 'tone-' + (s.selectedOptions[0].dataset.tone || 'gray'));
+      if (s.dataset.autosubmit !== undefined) s.form.submit();
+    });
+  });
 </script>
 </body>
 </html>

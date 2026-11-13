@@ -1,23 +1,39 @@
 <%- include('_head') %>
-<div class="card">
-  <div class="table-wrap">
-  <table class="table">
-    <thead><tr><th>#</th><th>Khách hàng</th><th>SĐT</th><th>Tổng</th><th>Trạng thái</th><th>Ngày</th><th></th></tr></thead>
+<% const _url = function (st) { const p = []; if (st) p.push('status=' + st); if (q) p.push('q=' + encodeURIComponent(q)); return '/admin/orders' + (p.length ? '?' + p.join('&') : ''); }; %>
+<nav class="tabs" aria-label="Lọc theo trạng thái">
+  <a class="tab<%= !status ? ' active' : '' %>" href="<%= _url('') %>">Tất cả <span class="n"><%= counts.all %></span></a>
+  <% Object.keys(ORDER_STATUSES).forEach(function (k) { const s = ORDER_STATUSES[k]; %>
+    <a class="tab tone-<%= s.tone %><%= status === k ? ' active' : '' %>" href="<%= _url(k) %>"><span class="dot"></span><%= s.label %> <span class="n"><%= counts[k] || 0 %></span></a>
+  <% }) %>
+</nav>
+<div class="card flush">
+  <div class="card-head">
+    <form class="filters" method="get" action="/admin/orders">
+      <% if (status) { %><input type="hidden" name="status" value="<%= status %>"><% } %>
+      <label class="search" style="margin:0"><%- icon('search') %><input name="q" value="<%= q %>" placeholder="Tìm mã đơn, tên, số điện thoại…" aria-label="Tìm kiếm"></label>
+      <button class="btn btn-sm btn-gray">Tìm</button>
+      <% if (q) { %><a class="btn btn-sm btn-ghost" href="<%= _url(status) %>">Xóa tìm</a><% } %>
+    </form>
+  </div>
+  <div class="table-wrap" style="margin-top:16px">
+  <table class="table stack">
+    <thead><tr><th>Đơn</th><th>Khách hàng</th><th>Số điện thoại</th><th class="num">Tổng tiền</th><th>Trạng thái</th><th>Đặt lúc</th><th></th></tr></thead>
     <tbody>
-      <% orders.forEach(function(o){ %>
-        <tr>
-          <td><a href="/admin/orders/<%= o.id %>">#<%= o.id %></a></td>
-          <td><%= o.customer_name %></td><td><a href="tel:<%= o.phone %>"><%= o.phone %></a></td>
-          <td><%= formatPrice(o.total) %></td>
-          <td><span class="status s-<%= o.status %>"><%= STATUSES[o.status] || o.status %></span></td>
-          <td><%= o.created_at %></td>
+      <% orders.forEach(function (o) { const st = ORDER_STATUSES[o.status] || { label: o.status, tone: 'gray' }; %>
+        <tr class="tone-<%= st.tone %>">
+          <td><a href="/admin/orders/<%= o.id %>"><b>#<%= o.id %></b></a></td>
+          <td><div class="person"><span class="avatar"><%= (o.customer_name || '?').trim().split(/\s+/).pop()[0] %></span><b><%= o.customer_name %></b></div></td>
+          <td><a href="tel:<%= String(o.phone).replace(/[^0-9+]/g, '') %>"><%= o.phone %></a></td>
+          <td class="num"><b><%= formatPrice(o.total) %></b></td>
+          <td><span class="badge tone-<%= st.tone %>"><%= st.label %></span></td>
+          <td class="when"><b><%= timeAgo(o.created_at) %></b><small><%= fmtDate(o.created_at) %></small></td>
           <td class="actions">
             <a class="btn btn-sm btn-gray" href="/admin/orders/<%= o.id %>">Chi tiết</a>
-            <% if (isAdmin) { %><form method="post" action="/admin/orders/<%= o.id %>/delete" data-confirm="Xóa đơn #<%= o.id %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form><% } %>
+            <% if (isAdmin) { %><form method="post" action="/admin/orders/<%= o.id %>/delete" data-confirm="Xóa đơn #<%= o.id %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-ghost danger" title="Xóa đơn" aria-label="Xóa đơn"><%- icon('trash') %></button></form><% } %>
           </td>
         </tr>
       <% }) %>
-      <% if (!orders.length) { %><tr><td colspan="7" class="muted">Chưa có đơn hàng.</td></tr><% } %>
+      <% if (!orders.length) { %><tr><td colspan="7" class="empty"><%- icon('bag') %><%= q || status ? 'Không có đơn nào khớp bộ lọc.' : 'Chưa có đơn hàng.' %></td></tr><% } %>
     </tbody>
   </table>
   </div>

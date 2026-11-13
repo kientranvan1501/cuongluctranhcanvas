@@ -1,31 +1,65 @@
 <%- include('_head') %>
-<div class="card">
-  <p class="muted">Khách điền form "Đăng ký nhận ưu đãi". Form được chèn vào trang nội dung bằng mã <code>[form_uu_dai]</code>.</p>
-  <div class="table-wrap">
-  <table class="table">
-    <thead><tr><th>#</th><th>Khách hàng</th><th>SĐT</th><th>Email</th><th>Không gian</th><th>Ghi chú</th><th>Ngày</th><th>Trạng thái</th><th></th></tr></thead>
+<%
+  const _url = function (st) { const p = []; if (st) p.push('status=' + st); if (q) p.push('q=' + encodeURIComponent(q)); return '/admin/leads' + (p.length ? '?' + p.join('&') : ''); };
+  const _back = _url(status);
+%>
+<p class="page-intro">Khách điền form "Đăng ký nhận ưu đãi" trên website. Bấm vào nhãn trạng thái để chuyển giai đoạn chăm sóc khách.</p>
+
+<nav class="tabs" aria-label="Lọc theo giai đoạn">
+  <a class="tab<%= !status ? ' active' : '' %>" href="<%= _url('') %>">Tất cả <span class="n"><%= counts.all %></span></a>
+  <% Object.keys(LEAD_STAGES).forEach(function (k) { const s = LEAD_STAGES[k]; %>
+    <a class="tab tone-<%= s.tone %><%= status === k ? ' active' : '' %>" href="<%= _url(k) %>" title="<%= s.hint %>"><span class="dot"></span><%= s.label %> <span class="n"><%= counts[k] || 0 %></span></a>
+  <% }) %>
+</nav>
+
+<div class="card flush">
+  <div class="card-head">
+    <form class="filters" method="get" action="/admin/leads">
+      <% if (status) { %><input type="hidden" name="status" value="<%= status %>"><% } %>
+      <label class="search" style="margin:0"><%- icon('search') %><input name="q" value="<%= q %>" placeholder="Tìm tên, số điện thoại, email…" aria-label="Tìm kiếm"></label>
+      <button class="btn btn-sm btn-gray">Tìm</button>
+      <% if (q) { %><a class="btn btn-sm btn-ghost" href="<%= _url(status) %>">Xóa tìm</a><% } %>
+    </form>
+    <div class="legend">
+      <% Object.keys(LEAD_STAGES).forEach(function (k) { const s = LEAD_STAGES[k]; %><span class="tone-<%= s.tone %>"><i></i><%= s.label %>: <%= s.hint.toLowerCase() %></span><% }) %>
+    </div>
+  </div>
+  <div class="table-wrap" style="margin-top:16px">
+  <table class="table stack">
+    <thead><tr><th>Khách hàng</th><th>Liên hệ</th><th>Nhu cầu / Ghi chú</th><th>Đăng ký lúc</th><th>Giai đoạn</th><th></th></tr></thead>
     <tbody>
-      <% leads.forEach(function(l){ %>
-        <tr>
-          <td><%= l.id %></td>
-          <td><strong><%= l.name %></strong></td>
-          <td><a href="tel:<%= l.phone %>"><%= l.phone %></a></td>
-          <td><% if (l.email) { %><a href="mailto:<%= l.email %>"><%= l.email %></a><% } %></td>
-          <td><%= l.need %></td>
-          <td><%= l.note %></td>
-          <td><%= l.created_at %></td>
+      <% leads.forEach(function (l) { const st = LEAD_STAGES[l.status] || LEAD_STAGES.new; %>
+        <tr class="tone-<%= st.tone %>">
           <td>
-            <form method="post" action="/admin/leads/<%= l.id %>">
-              <input type="hidden" name="_csrf" value="<%= csrf %>">
-              <select name="status" onchange="this.form.submit()"><% Object.keys(LEAD_STATUSES).forEach(function(k){ %><option value="<%= k %>" <%= l.status === k ? 'selected' : '' %>><%= LEAD_STATUSES[k] %></option><% }) %></select>
+            <div class="person"><span class="avatar"><%= (l.name || '?').trim().split(/\s+/).pop()[0] %></span>
+              <div><b><%= l.name %></b><small>#<%= l.id %><% if (l.source) { %> · từ trang <%= pages[l.source] || l.source %><% } %></small></div></div>
+          </td>
+          <td style="white-space:nowrap">
+            <a href="tel:<%= l.phone.replace(/[^0-9+]/g, '') %>"><b><%= l.phone %></b></a>
+            <% if (l.email) { %><br><a class="small muted" href="mailto:<%= l.email %>"><%= l.email %></a><% } %>
+          </td>
+          <td>
+            <% if (l.need) { %><span class="chip-need"><%= l.need %></span><% } %>
+            <% if (l.note) { %><div class="cell-note" title="<%= l.note %>"><%= l.note %></div><% } %>
+            <% if (!l.need && !l.note) { %><span class="muted">—</span><% } %>
+          </td>
+          <td class="when"><b><%= timeAgo(l.created_at) %></b><small><%= fmtDate(l.created_at) %></small></td>
+          <td>
+            <form method="post" action="/admin/leads/<%= l.id %>" style="margin:0">
+              <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="back" value="<%= _back %>">
+              <select name="status" class="status-select tone-<%= st.tone %>" data-autosubmit aria-label="Giai đoạn của <%= l.name %>">
+                <% Object.keys(LEAD_STAGES).forEach(function (k) { %><option value="<%= k %>" data-tone="<%= LEAD_STAGES[k].tone %>" <%= l.status === k ? 'selected' : '' %>><%= LEAD_STAGES[k].label %></option><% }) %>
+              </select>
             </form>
           </td>
           <td class="actions">
-            <form method="post" action="/admin/leads/<%= l.id %>/delete" data-confirm="Xóa đăng ký của <%= l.name %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form>
+            <a class="btn btn-sm btn-gray" href="tel:<%= l.phone.replace(/[^0-9+]/g, '') %>" title="Gọi điện"><%- icon('phone') %></a>
+            <% if (zaloLink(l.phone)) { %><a class="btn btn-sm btn-zalo" href="<%= zaloLink(l.phone) %>" target="_blank" rel="noopener" title="Nhắn Zalo">Zalo</a><% } %>
+            <form method="post" action="/admin/leads/<%= l.id %>/delete" data-confirm="Xóa đăng ký của <%= l.name %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="back" value="<%= _back %>"><button class="btn btn-sm btn-ghost danger" title="Xóa" aria-label="Xóa"><%- icon('trash') %></button></form>
           </td>
         </tr>
       <% }) %>
-      <% if (!leads.length) { %><tr><td colspan="9" class="muted">Chưa có đăng ký nào.</td></tr><% } %>
+      <% if (!leads.length) { %><tr><td colspan="6" class="empty"><%- icon('inbox') %><%= q || status ? 'Không có đăng ký nào khớp bộ lọc.' : 'Chưa có khách đăng ký nhận ưu đãi.' %><br><span class="small">Form được chèn vào trang nội dung bằng mã <code>[form_uu_dai]</code>.</span></td></tr><% } %>
     </tbody>
   </table>
   </div>

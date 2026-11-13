@@ -1,0 +1,42 @@
+<%- include('_head') %>
+<form method="post" enctype="multipart/form-data" action="/admin/reviews<%= r.id ? '/' + r.id : '' %>" class="card narrow">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <div class="row">
+    <label>Tên khách hàng *<input name="name" value="<%= r.name || '' %>" required maxlength="100" placeholder="VD: Chị Thu Hà"></label>
+    <label>Khu vực / nghề nghiệp<input name="location" value="<%= r.location || '' %>" maxlength="100" placeholder="VD: Quận 7, TP.HCM"></label>
+  </div>
+
+  <div class="pf-label">Số sao *</div>
+  <div class="star-pick" role="radiogroup" aria-label="Số sao">
+    <% for (var s = 5; s >= 1; s--) { %>
+      <input type="radio" name="rating" id="rt<%= s %>" value="<%= s %>" <%= (r.rating || 5) === s ? 'checked' : '' %>><label for="rt<%= s %>" title="<%= s %> sao">★</label>
+    <% } %>
+  </div>
+
+  <label>Nội dung đánh giá *<textarea name="content" rows="5" required maxlength="2000" placeholder="VD: Tranh in sắc nét, khung chắc chắn, giao hàng nhanh. Treo phòng khách rất đẹp!"><%= r.content || '' %></textarea></label>
+
+  <label>Sản phẩm được đánh giá
+    <select name="product_id">
+      <option value="">— Đánh giá chung về cửa hàng —</option>
+      <% products.forEach(function(p){ %><option value="<%= p.id %>" <%= r.product_id === p.id ? 'selected' : '' %>><%= p.name %><%= p.code ? ' - ' + p.code : '' %></option><% }) %>
+    </select>
+  </label>
+  <p class="muted small field-hint">Chọn sản phẩm thì đánh giá hiện ở trang sản phẩm đó. Để “Đánh giá chung” thì hiện ở trang chủ và ở các sản phẩm chưa có đánh giá riêng.</p>
+
+  <% if (r.image) { %>
+    <div class="rv-img-now"><img class="thumb lg" src="<%= r.image %>" alt=""><label class="check"><input type="checkbox" name="remove_image"> Xóa ảnh này</label></div>
+  <% } %>
+  <input type="hidden" name="image" value="<%= r.image || '' %>">
+  <label>Ảnh khách gửi (không bắt buộc) — ảnh tranh treo thực tế hoặc ảnh đại diện
+    <input type="file" name="upload" accept="image/*"></label>
+
+  <div class="row">
+    <label>Thứ tự<input name="sort_order" type="number" value="<%= r.sort_order || 0 %>"></label>
+    <div>
+      <label class="check"><input type="checkbox" name="active" <%= r.active ? 'checked' : '' %>> Hiển thị trên website</label>
+      <label class="check"><input type="checkbox" name="show_home" <%= r.show_home ? 'checked' : '' %>> Hiện ở trang chủ</label>
+    </div>
+  </div>
+  <div class="btn-row"><button class="btn"><%- icon('check') %>Lưu</button><a class="btn btn-gray" href="/admin/reviews">Hủy</a></div>
+</form>
+<%- include('_foot') %>

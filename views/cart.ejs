@@ -7,8 +7,7 @@
     <form class="checkout" method="post" action="/dat-hang" id="checkoutForm">
       <h3>Thông tin đặt hàng</h3>
       <input name="customer_name" placeholder="Họ và tên *" required>
-      <input name="phone" placeholder="Số điện thoại *" required pattern="[0-9 .+]{8,15}">
-      <input name="email" type="email" placeholder="Email">
+      <input name="phone" type="tel" inputmode="numeric" placeholder="Số điện thoại * (10 – 11 số)" required pattern="[0-9 .]{10,14}" title="Số điện thoại gồm 10 – 11 chữ số">
       <input name="address" placeholder="Địa chỉ giao hàng">
       <textarea name="note" placeholder="Ghi chú" rows="3"></textarea>
       <input type="hidden" name="items" id="itemsField">

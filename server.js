@@ -2,7 +2,8 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const crypto = require('crypto');
-const { db, getSettings } = require('./db');
+const { db, getSettings, sessionSecret } = require('./db');
+const { textToHtml } = require('./lib/rich-text');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -14,8 +15,40 @@ app.set('trust proxy', 1);
 app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d' }));
+// Phiên đăng nhập lưu trong SQLite (bảng sessions): không mất khi web khởi động lại,
+// dùng chung được khi hosting (Passenger) chạy nhiều tiến trình song song
+class SqliteStore extends session.Store {
+  constructor() {
+    super();
+    this.q = {
+      get: db.prepare('SELECT data FROM sessions WHERE sid = ? AND expires > ?'),
+      set: db.prepare('INSERT INTO sessions (sid, data, expires) VALUES (?, ?, ?) ON CONFLICT(sid) DO UPDATE SET data = excluded.data, expires = excluded.expires'),
+      touch: db.prepare('UPDATE sessions SET expires = ? WHERE sid = ?'),
+      del: db.prepare('DELETE FROM sessions WHERE sid = ?'),
+      prune: db.prepare('DELETE FROM sessions WHERE expires <= ?'),
+    };
+    this.prune();
+    setInterval(() => this.prune(), 60 * 60 * 1000).unref(); // dọn phiên hết hạn mỗi giờ
+  }
+  expiry(sess) { return sess.cookie && sess.cookie.expires ? new Date(sess.cookie.expires).getTime() : Date.now() + 86400000; }
+  prune() { try { this.q.prune.run(Date.now()); } catch (e) { /* bỏ qua */ } }
+  get(sid, cb) {
+    try { const r = this.q.get.get(sid, Date.now()); cb(null, r ? JSON.parse(r.data) : null); } catch (e) { cb(e); }
+  }
+  set(sid, sess, cb) {
+    try { this.q.set.run(sid, JSON.stringify(sess), this.expiry(sess)); cb && cb(null); } catch (e) { cb && cb(e); }
+  }
+  touch(sid, sess, cb) {
+    try { this.q.touch.run(this.expiry(sess), sid); cb && cb(null); } catch (e) { cb && cb(e); }
+  }
+  destroy(sid, cb) {
+    try { this.q.del.run(sid); cb && cb(null); } catch (e) { cb && cb(e); }
+  }
+}
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex'),
+  store: new SqliteStore(),
+  secret: sessionSecret(),
   resave: false,
   saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: 'lax', maxAge: 1000 * 60 * 60 * 8 },
@@ -36,10 +69,11 @@ app.use((req, res, next) => {
   res.locals.baseUrl = (siteUrl ? (/^https?:\/\//i.test(siteUrl) ? siteUrl : 'https://' + siteUrl) : `${req.protocol}://${req.get('host')}`).replace(/\/+$/, '');
   res.locals.absUrl = (u) => !u ? '' : /^https?:\/\//i.test(u) ? u : res.locals.baseUrl + (u.startsWith('/') ? '' : '/') + u;
   res.locals.plain = (html, n = 160) => {
-    const t = String(html || '').replace(/<[^>]*>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+    const t = textToHtml(String(html || '')).replace(/<[^>]*>/g, ' ') // nội dung dạng chữ thường (##, **…) -> HTML -> bỏ thẻ.replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
     return t.length > n ? t.slice(0, n - 1).replace(/\s+\S*$/, '') + '…' : t;
   };
   res.locals.asset = asset;
+  res.locals.richText = textToHtml; // mô tả gõ chữ thường -> HTML (giữ xuống dòng)
   res.locals.seo = {}; // từng route ghi đè: canonical, description, image, type, noindex, jsonld[]
   res.locals.formatPrice = (n) => Number(n || 0).toLocaleString('vi-VN') + 'đ';
   res.locals.currentPath = req.path;
@@ -50,7 +84,8 @@ app.use((req, res, next) => {
 // Menu danh mục + trang chính sách cho header/footer (chỉ trang public)
 app.use((req, res, next) => {
   if (req.path.startsWith('/admin')) return next();
-  const cats = db.prepare('SELECT * FROM categories ORDER BY sort_order, name').all();
+  // Danh mục bỏ tick "Hiện trên menu" bị ẩn khỏi header (cùng các mục con của nó); trang danh mục vẫn mở được
+  const cats = db.prepare('SELECT * FROM categories WHERE show_menu = 1 ORDER BY sort_order, name').all();
   const byParent = {};
   cats.forEach(c => (byParent[c.parent_id || 0] ||= []).push(c));
   const build = (pid) => (byParent[pid] || []).map(c => ({ ...c, children: build(c.id) }));

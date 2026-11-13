@@ -3,7 +3,7 @@
   <h1 class="page-title">Bộ Sưu Tập</h1>
   <div class="cat-grid">
     <% cats.forEach(function(c){ %>
-      <a class="cat-tile" href="/danh-muc/<%= c.slug %>"><img src="<%= c.image || '/img/no-image.svg' %>" alt="<%= c.name %>" loading="lazy"><span><%= c.name %></span></a>
+      <a class="cat-tile" href="/danh-muc/<%= c.slug %>"><img src="<%= c.image || '/img/no-image.svg' %>"<% if (c.srcset) { %> srcset="<%= c.srcset %>" sizes="(max-width: 720px) 50vw, (max-width: 1024px) 33vw, 310px"<% } %> alt="<%= c.name %>" loading="lazy" decoding="async"><span><%= c.name %></span></a>
     <% }) %>
   </div>
 </div>

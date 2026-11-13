@@ -1,20 +1,57 @@
 <%- include('_head') %>
 <div class="stats">
-  <a href="/admin/products" class="stat"><span><%= stats.products %></span>Sản phẩm</a>
-  <a href="/admin/categories" class="stat"><span><%= stats.categories %></span>Danh mục</a>
-  <a href="/admin/orders" class="stat"><span><%= stats.orders %></span>Đơn hàng</a>
-  <a href="/admin/orders" class="stat hl"><span><%= stats.newOrders %></span>Đơn mới</a>
+  <a href="/admin/orders?status=new" class="stat tone-blue"><span class="stat-ic"><%- icon('bag') %></span><span class="stat-v"><%= stats.newOrders %></span><span class="stat-l">Đơn hàng mới cần xử lý</span><span class="stat-sub muted"><%= stats.orders %> đơn</span></a>
+  <a href="/admin/leads?status=new" class="stat tone-amber"><span class="stat-ic"><%- icon('gift') %></span><span class="stat-v"><%= stats.newLeads %></span><span class="stat-l">Khách đăng ký chưa liên hệ</span><span class="stat-sub muted"><%= stats.leads %> lượt</span></a>
+  <a href="/admin/orders?status=done" class="stat tone-green"><span class="stat-ic"><%- icon('money') %></span><span class="stat-v"><%= formatPrice(stats.monthRevenue) %></span><span class="stat-l">Doanh thu tháng này (đơn hoàn thành)</span></a>
+  <a href="/admin/products" class="stat"><span class="stat-ic"><%- icon('image') %></span><span class="stat-v"><%= stats.activeProducts %></span><span class="stat-l">Sản phẩm đang hiển thị</span><span class="stat-sub muted"><%= stats.categories %> danh mục</span></a>
 </div>
+
+<div class="grid-2">
+  <div class="card flush">
+    <div class="card-head"><h3>Đơn hàng gần đây</h3><a class="btn btn-sm btn-gray" href="/admin/orders">Xem tất cả</a></div>
+    <div class="table-wrap" style="margin-top:14px">
+    <table class="table">
+      <tbody>
+        <% recent.forEach(function (o) { const st = ORDER_STATUSES[o.status] || { label: o.status, tone: 'gray' }; %>
+          <tr class="tone-<%= st.tone %>">
+            <td><a href="/admin/orders/<%= o.id %>"><b>#<%= o.id %></b></a></td>
+            <td><b><%= o.customer_name %></b><br><span class="small muted"><%= timeAgo(o.created_at) %></span></td>
+            <td class="num"><b><%= formatPrice(o.total) %></b></td>
+            <td class="actions"><span class="badge tone-<%= st.tone %>"><%= st.label %></span></td>
+          </tr>
+        <% }) %>
+        <% if (!recent.length) { %><tr><td class="empty"><%- icon('bag') %>Chưa có đơn hàng.</td></tr><% } %>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="card flush">
+    <div class="card-head"><h3>Khách đăng ký ưu đãi mới</h3><a class="btn btn-sm btn-gray" href="/admin/leads">Xem tất cả</a></div>
+    <div class="table-wrap" style="margin-top:14px">
+    <table class="table">
+      <tbody>
+        <% recentLeads.forEach(function (l) { const st = LEAD_STAGES[l.status] || LEAD_STAGES.new; %>
+          <tr class="tone-<%= st.tone %>">
+            <td><div class="person"><span class="avatar"><%= (l.name || '?').trim().split(/\s+/).pop()[0] %></span><div><b><%= l.name %></b><small><%= timeAgo(l.created_at) %><%= l.need ? ' · ' + l.need : '' %></small></div></div></td>
+            <td><a href="tel:<%= l.phone.replace(/[^0-9+]/g, '') %>"><%= l.phone %></a></td>
+            <td class="actions"><span class="badge tone-<%= st.tone %>"><%= st.label %></span></td>
+          </tr>
+        <% }) %>
+        <% if (!recentLeads.length) { %><tr><td class="empty"><%- icon('gift') %>Chưa có khách đăng ký.</td></tr><% } %>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+
 <div class="card">
-  <div class="card-head"><h2>Đơn hàng gần đây</h2><a class="btn btn-sm" href="/admin/products/new">+ Thêm sản phẩm</a></div>
-  <table class="table">
-    <thead><tr><th>#</th><th>Khách hàng</th><th>SĐT</th><th>Tổng</th><th>Ngày</th></tr></thead>
-    <tbody>
-      <% recent.forEach(function(o){ %>
-        <tr><td><a href="/admin/orders/<%= o.id %>">#<%= o.id %></a></td><td><%= o.customer_name %></td><td><%= o.phone %></td><td><%= formatPrice(o.total) %></td><td><%= o.created_at %></td></tr>
-      <% }) %>
-      <% if (!recent.length) { %><tr><td colspan="5" class="muted">Chưa có đơn hàng.</td></tr><% } %>
-    </tbody>
-  </table>
+  <h3>Thao tác nhanh</h3>
+  <div class="btn-row">
+    <a class="btn btn-sm" href="/admin/products/new"><%- icon('plus') %>Thêm sản phẩm</a>
+    <a class="btn btn-sm btn-gray" href="/admin/products/import"><%- icon('upload') %>Nhập sản phẩm từ Excel</a>
+    <a class="btn btn-sm btn-gray" href="/admin/branding"><%- icon('palette') %>Đổi logo / banner</a>
+    <a class="btn btn-sm btn-gray" href="/admin/settings"><%- icon('sliders') %>Cài đặt website</a>
+  </div>
 </div>
 <%- include('_foot') %>

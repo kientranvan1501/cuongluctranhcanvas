@@ -4,5 +4,5 @@
   <p>Mã đơn hàng của bạn: <strong>#<%= orderId %></strong>. Chúng tôi sẽ liên hệ xác nhận sớm nhất.</p>
   <a class="btn" href="/shop">Tiếp tục mua sắm</a>
 </div>
-<script>try { localStorage.removeItem('cart'); } catch (e) {}</script>
+<% if (typeof quick === 'undefined' || !quick) { %><script>try { localStorage.removeItem('cart'); } catch (e) {}</script><% } %>
 <%- include('partials/footer') %>

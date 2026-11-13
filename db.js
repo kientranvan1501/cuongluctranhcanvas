@@ -3,8 +3,33 @@ const { DatabaseSync } = require('node:sqlite');
 const path = require('path');
 const crypto = require('crypto');
 
-const db = new DatabaseSync(path.join(__dirname, 'data', 'shop.db'));
-db.exec('PRAGMA foreign_keys = ON;');
+const fs = require('fs');
+
+// Thư mục dữ liệu & ảnh không nằm trong Git -> tự tạo khi chạy lần đầu trên máy/hosting mới
+const DATA_DIR = path.join(__dirname, 'data');
+fs.mkdirSync(DATA_DIR, { recursive: true });
+fs.mkdirSync(path.join(__dirname, 'public', 'uploads'), { recursive: true });
+
+const db = new DatabaseSync(path.join(DATA_DIR, 'shop.db'));
+// WAL: đọc & ghi song song; busy_timeout: nhiều tiến trình cùng ghi thì chờ thay vì báo lỗi "database is locked"
+db.exec('PRAGMA journal_mode = WAL; PRAGMA busy_timeout = 5000; PRAGMA synchronous = NORMAL; PRAGMA foreign_keys = ON;');
+
+db.exec(`CREATE TABLE IF NOT EXISTS sessions (
+  sid TEXT PRIMARY KEY,
+  data TEXT NOT NULL,
+  expires INTEGER NOT NULL
+)`);
+
+// Khóa bí mật ký cookie đăng nhập: lấy từ biến môi trường SESSION_SECRET, nếu không có thì tạo 1 lần và lưu vào file
+// (không lưu trong bảng settings vì settings được đưa ra giao diện)
+function sessionSecret() {
+  if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
+  const file = path.join(DATA_DIR, '.session-secret');
+  try { return fs.readFileSync(file, 'utf8').trim(); } catch (e) { /* chưa có */ }
+  const s = crypto.randomBytes(32).toString('hex');
+  fs.writeFileSync(file, s, { mode: 0o600 });
+  return s;
+}
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS categories (
@@ -54,6 +79,19 @@ CREATE TABLE IF NOT EXISTS orders (
   status TEXT DEFAULT 'new',
   created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS reviews (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  location TEXT DEFAULT '',
+  rating INTEGER DEFAULT 5,
+  content TEXT NOT NULL,
+  image TEXT DEFAULT '',
+  product_id INTEGER,
+  show_home INTEGER DEFAULT 1,
+  active INTEGER DEFAULT 1,
+  sort_order INTEGER DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
 CREATE TABLE IF NOT EXISTS leads (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT, phone TEXT, email TEXT,
@@ -77,6 +115,11 @@ CREATE TABLE IF NOT EXISTS settings (
   value TEXT DEFAULT ''
 );
 `);
+// Thêm cột mới cho DB đã có sẵn (hosting) — chạy được nhiều lần
+const addColumn = (table, col, def) => {
+  if (!db.prepare(`PRAGMA table_info(${table})`).all().some(c => c.name === col)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+};
+addColumn('categories', 'show_menu', 'INTEGER DEFAULT 1'); // hiện trên menu header
 
 // ---------- helpers ----------
 function slugify(str) {
@@ -114,14 +157,66 @@ function setSetting(key, value) {
     .run(key, value == null ? '' : String(value));
 }
 
+// Ảnh nhỏ cho thẻ sản phẩm: nếu có file "<tên>-sm.<đuôi>" cạnh ảnh gốc thì dùng (nhẹ hơn nhiều), không thì dùng ảnh gốc
+const smCache = new Map();
+function smallImage(img) {
+  if (!img || !img.startsWith('/uploads/')) return img;
+  if (!smCache.has(img)) {
+    const sm = img.replace(/(\.\w+)$/, '-sm$1');
+    smCache.set(img, fs.existsSync(path.join(__dirname, 'public', sm)) ? sm : img);
+  }
+  return smCache.get(img);
+}
+// Chiều rộng thật của ảnh JPEG/PNG (đọc phần đầu file, có cache) — dùng cho srcset
+const wCache = new Map();
+function imageWidth(img) {
+  if (!img || !img.startsWith('/uploads/')) return 0;
+  if (!wCache.has(img)) {
+    let w = 0;
+    try {
+      const fd = fs.openSync(path.join(__dirname, 'public', img), 'r'), b = Buffer.alloc(65536);
+      const n = fs.readSync(fd, b, 0, b.length, 0); fs.closeSync(fd);
+      if (b[0] === 0x89 && b[1] === 0x50) w = b.readUInt32BE(16); // PNG
+      else for (let i = 2; i + 9 < n;) { // JPEG: tìm khung SOF
+        if (b[i] !== 0xFF) break;
+        const m = b[i + 1];
+        if (m >= 0xC0 && m <= 0xCF && ![0xC4, 0xC8, 0xCC].includes(m)) { w = b.readUInt16BE(i + 7); break; }
+        i += 2 + b.readUInt16BE(i + 2);
+      }
+    } catch (e) { /* không đọc được -> 0 */ }
+    wCache.set(img, w);
+  }
+  return wCache.get(img);
+}
+// srcset "ảnh nhỏ 800w, ảnh gốc <rộng>w": trình duyệt tự chọn ảnh gốc khi màn hình cần nét hơn
+function imageSrcset(img) {
+  const sm = smallImage(img);
+  if (!sm || sm === img) return '';
+  const w = imageWidth(img), ws = imageWidth(sm);
+  return w > ws && ws ? `${sm} ${ws}w, ${img} ${w}w` : '';
+}
+
 function parseProduct(p) {
   if (!p) return p;
   try { p.images = JSON.parse(p.images || '[]'); } catch { p.images = []; }
   try { p.variants = JSON.parse(p.variants || '[]'); } catch { p.variants = []; }
-  const prices = p.variants.map(v => +v.price).filter(n => n > 0);
-  p.min_price = prices.length ? Math.min(...prices) : (p.sale_price || p.price);
-  p.has_range = prices.length > 1 && Math.min(...prices) !== Math.max(...prices);
+  // Giá bán thực tế: giá KM nếu có và nhỏ hơn giá gốc
+  const finalOf = (price, sale) => (+sale > 0 && +sale < +price ? +sale : +price);
+  p.variants.forEach(v => { v.price = +v.price || 0; v.sale_price = +v.sale_price || 0; v.final = finalOf(v.price, v.sale_price); });
+  const priced = p.variants.filter(v => v.final > 0);
+  if (priced.length) {
+    const cheapest = priced.reduce((a, b) => (b.final < a.final ? b : a));
+    p.min_price = cheapest.final;
+    p.compare_price = cheapest.final < cheapest.price ? cheapest.price : 0; // giá gạch ngang
+    p.has_range = priced.some(v => v.final !== cheapest.final);
+  } else {
+    p.min_price = finalOf(p.price, p.sale_price);
+    p.compare_price = p.min_price < p.price ? p.price : 0;
+    p.has_range = false;
+  }
   p.thumb = p.images[0] || '/img/no-image.svg';
+  p.card = smallImage(p.thumb);
+  p.cardSrcset = imageSrcset(p.thumb);
   return p;
 }
 
@@ -171,11 +266,11 @@ function seed() {
   let order = 0;
   const leafIds = [];
   for (const [parent, kids] of Object.entries(tree)) {
-    const pid = insCat.run(parent, slugify(parent), canvas, `https://picsum.photos/seed/${slugify(parent)}/600/600`, ++order, 1).lastInsertRowid;
-    for (const k of kids) leafIds.push(insCat.run(k, slugify(k), pid, `https://picsum.photos/seed/${slugify(k)}/600/600`, ++order, 0).lastInsertRowid);
+    const pid = insCat.run(parent, slugify(parent), canvas, '', ++order, 1).lastInsertRowid;
+    for (const k of kids) leafIds.push(insCat.run(k, slugify(k), pid, '', ++order, 0).lastInsertRowid);
   }
-  const sonDau = insCat.run('Tranh Sơn Dầu', 'tranh-son-dau', null, 'https://picsum.photos/seed/son-dau/600/600', 2, 1).lastInsertRowid;
-  const trangGuong = insCat.run('Tranh Tráng Gương', 'tranh-trang-guong', null, 'https://picsum.photos/seed/trang-guong/600/600', 3, 1).lastInsertRowid;
+  const sonDau = insCat.run('Tranh Sơn Dầu', 'tranh-son-dau', null, '', 2, 1).lastInsertRowid;
+  const trangGuong = insCat.run('Tranh Tráng Gương', 'tranh-trang-guong', null, '', 3, 1).lastInsertRowid;
 
   const insP = db.prepare(`INSERT INTO products(name, code, slug, category_id, price, sale_price, variants, images, short_desc, description, vendor, featured, is_new)
     VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`);
@@ -227,4 +322,14 @@ function migrateUsers() {
 }
 migrateUsers();
 
-module.exports = { db, slugify, uniqueSlug, hashPassword, verifyPassword, getSettings, setSetting, parseProduct };
+// Dọn ảnh minh họa tạm (picsum.photos) của danh mục từ dữ liệu mẫu cũ: danh mục không có ảnh sẽ tự lấy ảnh tranh trong danh mục
+db.prepare("UPDATE categories SET image = '' WHERE image LIKE 'https://picsum.photos/%'").run();
+// Bản cũ: SP có biến thể thì giá KM chung bị bỏ qua -> chuyển giá KM đó vào biến thể đầu tiên
+for (const r of db.prepare("SELECT id, sale_price, variants FROM products WHERE sale_price > 0 AND variants LIKE '[{%'").all()) {
+  let vs; try { vs = JSON.parse(r.variants); } catch { continue; }
+  if (!vs.length || vs.some(v => +v.sale_price > 0) || !(r.sale_price < +vs[0].price)) continue;
+  vs[0].sale_price = r.sale_price;
+  db.prepare('UPDATE products SET variants = ? WHERE id = ?').run(JSON.stringify(vs), r.id);
+}
+
+module.exports = { db, sessionSecret, slugify, uniqueSlug, hashPassword, verifyPassword, getSettings, setSetting, parseProduct, smallImage, imageSrcset };

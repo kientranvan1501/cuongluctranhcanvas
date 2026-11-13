@@ -81,8 +81,8 @@
       <% } %>
 
       <div class="mode-switch" role="radiogroup" aria-label="Kiểu banner">
-        <label><input type="radio" name="hero_mode" value="static" <%= mode === 'static' ? 'checked' : '' %>><span><b>🖼 Banner tĩnh</b><small>1 ảnh cố định</small></span></label>
-        <label><input type="radio" name="hero_mode" value="slider" <%= mode === 'slider' ? 'checked' : '' %>><span><b>🎞 Slider</b><small>Nhiều ảnh tự chuyển</small></span></label>
+        <label><input type="radio" name="hero_mode" value="static" <%= mode === 'static' ? 'checked' : '' %>><span><b>Banner tĩnh</b><small>1 ảnh cố định</small></span></label>
+        <label><input type="radio" name="hero_mode" value="slider" <%= mode === 'slider' ? 'checked' : '' %>><span><b>Slider</b><small>Nhiều ảnh tự chuyển</small></span></label>
       </div>
 
       <div class="hero-mock" id="heroMock" style="--ov: <%= (settings.hero_overlay || 55) / 100 %>">
@@ -137,8 +137,8 @@
 
   <div class="col-side">
     <div class="card">
-      <button class="btn full">💾 Lưu logo &amp; banner</button>
-      <a class="btn btn-gray full" href="/" target="_blank" style="margin-top:8px">↗ Xem trang chủ</a>
+      <button class="btn full"><%- icon('check') %>Lưu logo &amp; banner</button>
+      <a class="btn btn-gray full" href="/" target="_blank" style="margin-top:8px"><%- icon('external') %>Xem trang chủ</a>
     </div>
     <div class="card">
       <h3>Mẹo</h3>

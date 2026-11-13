@@ -5,7 +5,8 @@
     <label>Tiêu đề *<input name="title" value="<%= pg.title || '' %>" required></label>
     <label>Đường dẫn (slug)<input name="slug" value="<%= pg.slug || '' %>" placeholder="Để trống sẽ tự tạo"></label>
   </div>
-  <label>Nội dung (HTML)<textarea name="content" rows="18" class="code"><%= pg.content || '' %></textarea></label>
+  <label>Nội dung<textarea name="content" rows="18" placeholder="Gõ nội dung như bình thường…"><%= htmlToText(pg.content) %></textarea></label>
+  <p class="muted small field-hint">Enter = xuống dòng · bỏ trống 1 dòng = đoạn mới · <b>- </b> đầu dòng = gạch đầu dòng · <b>## </b> đầu dòng = tiêu đề · <b>**chữ**</b> = in đậm · <b>[chữ](https://…)</b> = liên kết · <b>&gt; </b> đầu dòng = khung nổi bật. Số điện thoại, email, link https:// tự thành liên kết. Gõ <b>[form_uu_dai]</b> ở 1 dòng riêng để chèn form đăng ký ưu đãi.</p>
   <div class="row">
     <label>Vị trí footer
       <select name="footer_group">
@@ -15,6 +16,6 @@
     </label>
     <label class="check"><input type="checkbox" name="active" <%= pg.active ? 'checked' : '' %>> Hiển thị</label>
   </div>
-  <div class="btn-row"><button class="btn">💾 Lưu</button><a class="btn btn-gray" href="/admin/pages">Hủy</a></div>
+  <div class="btn-row"><button class="btn"><%- icon('check') %>Lưu</button><a class="btn btn-gray" href="/admin/pages">Hủy</a></div>
 </form>
 <%- include('_foot') %>

@@ -9,7 +9,40 @@
         <label>Đường dẫn (slug)<input name="slug" value="<%= p.slug || '' %>" placeholder="Để trống sẽ tự tạo"></label>
       </div>
       <label>Mô tả ngắn<textarea name="short_desc" rows="2"><%= p.short_desc || '' %></textarea></label>
-      <label>Mô tả chi tiết (hỗ trợ HTML)<textarea name="description" rows="10" class="code"><%= p.description || '' %></textarea></label>
+      <label>Mô tả chi tiết<textarea name="description" rows="10" placeholder="Gõ như bình thường, Enter để xuống dòng.&#10;Dòng bắt đầu bằng dấu - sẽ thành gạch đầu dòng:&#10;- Mực in UV sắc nét, bền màu&#10;- Kèm đinh 3 chân, không cần khoan"><%= htmlToText(p.description) %></textarea></label>
+      <p class="muted small field-hint">Enter = xuống dòng · bỏ trống 1 dòng = đoạn mới · <b>- </b> đầu dòng = gạch đầu dòng · <b>## </b> đầu dòng = tiêu đề · <b>**chữ**</b> = in đậm · <b>[chữ](https://…)</b> = liên kết · <b>&gt; </b> đầu dòng = khung nổi bật. Số điện thoại, email, link https:// tự thành liên kết.</p>
+
+      <% if (p.id) { %>
+        <details class="bulk-apply" id="bulkApply">
+          <summary><%- icon('copy') %>Áp dụng mô tả này cho nhiều sản phẩm</summary>
+          <div class="ba-body">
+            <input type="hidden" name="pid" value="<%= p.id %>">
+            <div class="ba-line"><span class="ba-label">Áp dụng</span>
+              <label class="check"><input type="checkbox" name="bulk_fields[]" value="short"> Mô tả ngắn</label>
+              <label class="check"><input type="checkbox" name="bulk_fields[]" value="long" checked> Mô tả chi tiết</label>
+            </div>
+            <div class="ba-line"><span class="ba-label">Cho</span>
+              <label class="check"><input type="radio" name="bulk_scope" value="cats" checked> Sản phẩm trong danh mục đã chọn</label>
+              <label class="check"><input type="radio" name="bulk_scope" value="all"> Tất cả sản phẩm (<%= totalProducts %>)</label>
+            </div>
+            <div class="ba-cats" id="baCats">
+              <% cats.forEach(function (c, i) {
+                   var sum = catCounts[c.id] || 0;
+                   for (var j = i + 1; j < cats.length && cats[j].depth > c.depth; j++) sum += catCounts[cats[j].id] || 0; %>
+                <label class="check" style="padding-left:<%= c.depth * 22 %>px">
+                  <input type="checkbox" name="bulk_cats[]" value="<%= c.id %>" data-depth="<%= c.depth %>" <%= p.category_id === c.id ? 'checked' : '' %>>
+                  <%= c.name %> <span class="muted small">(<%= sum %>)</span>
+                </label>
+              <% }) %>
+            </div>
+            <p class="muted small" style="margin:6px 0 0">Chọn danh mục cha là áp dụng luôn cho các danh mục con. Nội dung lấy theo ô mô tả đang gõ ở trên (chưa cần bấm Lưu).</p>
+            <div class="ba-foot">
+              <button class="btn btn-sm btn-accent" id="baGo" formaction="/admin/products/bulk-desc" formnovalidate><%- icon('check') %>Áp dụng</button>
+              <span class="muted small" id="baInfo"></span>
+            </div>
+          </div>
+        </details>
+      <% } %>
     </div>
 
     <div class="card">
@@ -24,12 +57,37 @@
 
     <div class="card">
       <h3>Giá &amp; kích thước</h3>
-      <div class="row">
-        <label>Giá gốc (đ)<input name="price" value="<%= p.price || '' %>" inputmode="numeric"></label>
-        <label>Giá khuyến mãi (đ)<input name="sale_price" value="<%= p.sale_price || '' %>" inputmode="numeric" placeholder="Để trống nếu không giảm"></label>
+      <% const money = function (n) { return n ? Number(n).toLocaleString('vi-VN') : ''; }; %>
+      <div id="basePrice">
+        <div class="row">
+          <label>Giá gốc (đ)<input name="price" value="<%= money(p.price) %>" inputmode="numeric" data-money></label>
+          <label>Giá khuyến mãi (đ)<input name="sale_price" value="<%= money(p.sale_price) %>" inputmode="numeric" data-money placeholder="Để trống nếu không giảm"></label>
+        </div>
       </div>
-      <label>Các kích thước / biến thể — mỗi dòng: <code>Tên | Giá</code> (nếu có, giá biến thể sẽ được dùng thay giá gốc)
-        <textarea name="variants" rows="5" class="code" placeholder="40x60cm | 920000&#10;60x90cm | 1330000"><%= p.variants.map(function(v){ return v.name + ' | ' + v.price }).join('\n') %></textarea></label>
+      <p class="muted small" id="variantNote" hidden>Sản phẩm có biến thể nên giá lấy theo từng biến thể bên dưới. Muốn giảm giá thì điền <b>Giá KM</b> vào biến thể tương ứng.</p>
+
+      <div class="variant-editor">
+        <div class="ve-head"><span>Biến thể (kích thước / chất liệu)</span><span>Giá gốc (đ)</span><span>Giá KM (đ)</span><span></span></div>
+        <div id="veRows">
+          <% p.variants.forEach(function (v) { %>
+            <div class="ve-row">
+              <input name="v_name[]" value="<%= v.name %>" placeholder="VD: 40x60cm" aria-label="Tên biến thể">
+              <input name="v_price[]" value="<%= money(v.price) %>" inputmode="numeric" data-money placeholder="Giá gốc" aria-label="Giá gốc">
+              <input name="v_sale[]" value="<%= money(v.sale_price) %>" inputmode="numeric" data-money placeholder="Không giảm" aria-label="Giá khuyến mãi">
+              <button type="button" class="btn btn-sm btn-ghost danger ve-del" title="Xóa biến thể" aria-label="Xóa biến thể"><%- icon('trash') %></button>
+            </div>
+          <% }) %>
+        </div>
+        <button type="button" class="btn btn-sm btn-gray" id="veAdd"><%- icon('plus') %>Thêm biến thể</button>
+      </div>
+      <template id="veTpl">
+        <div class="ve-row">
+          <input name="v_name[]" placeholder="VD: 40x60cm" aria-label="Tên biến thể">
+          <input name="v_price[]" inputmode="numeric" data-money placeholder="Giá gốc" aria-label="Giá gốc">
+          <input name="v_sale[]" inputmode="numeric" data-money placeholder="Không giảm" aria-label="Giá khuyến mãi">
+          <button type="button" class="btn btn-sm btn-ghost danger ve-del" title="Xóa biến thể" aria-label="Xóa biến thể"><%- icon('trash') %></button>
+        </div>
+      </template>
     </div>
 
     <div class="card">
@@ -45,7 +103,7 @@
       <label class="check"><input type="checkbox" name="active" <%= p.active ? 'checked' : '' %>> Hiển thị trên website</label>
       <label class="check"><input type="checkbox" name="featured" <%= p.featured ? 'checked' : '' %>> Sản phẩm nổi bật</label>
       <label class="check"><input type="checkbox" name="is_new" <%= p.is_new ? 'checked' : '' %>> BST mới</label>
-      <button class="btn full">💾 Lưu sản phẩm</button>
+      <button class="btn full"><%- icon('check') %>Lưu sản phẩm</button>
       <% if (p.id) { %><a class="btn btn-gray full" href="/san-pham/<%= p.slug %>" target="_blank">Xem trên web</a><% } %>
       <a class="btn btn-gray full" href="/admin/products">← Quay lại</a>
     </div>
@@ -60,4 +118,63 @@
     </div>
   </div>
 </form>
+<script>
+(function () {
+  var rows = document.getElementById('veRows'), tpl = document.getElementById('veTpl');
+  var base = document.getElementById('basePrice'), note = document.getElementById('variantNote');
+  function refresh() {
+    var has = rows.children.length > 0;
+    base.hidden = has; note.hidden = !has;
+  }
+  // Giá: tự thêm dấu chấm ngăn cách hàng nghìn khi gõ
+  function fmtMoney(el) {
+    var d = el.value.replace(/\D/g, '');
+    el.value = d ? Number(d).toLocaleString('vi-VN') : '';
+  }
+  document.addEventListener('input', function (e) { if (e.target.matches('[data-money]')) fmtMoney(e.target); });
+  document.getElementById('veAdd').addEventListener('click', function () {
+    rows.appendChild(tpl.content.cloneNode(true));
+    refresh();
+    rows.lastElementChild.querySelector('input').focus();
+  });
+  rows.addEventListener('click', function (e) {
+    var b = e.target.closest('.ve-del');
+    if (b) { b.closest('.ve-row').remove(); refresh(); }
+  });
+  refresh();
+
+  // ----- Áp dụng mô tả cho nhiều sản phẩm -----
+  var ba = document.getElementById('bulkApply');
+  if (ba) {
+    var counts = <%- JSON.stringify(typeof catCounts !== 'undefined' ? catCounts : {}) %>, total = <%= typeof totalProducts !== 'undefined' ? totalProducts : 0 %>;
+    var boxes = [].slice.call(ba.querySelectorAll('input[name="bulk_cats[]"]'));
+    var catWrap = document.getElementById('baCats'), info = document.getElementById('baInfo');
+    var scope = function () { return ba.querySelector('input[name="bulk_scope"]:checked').value; };
+    function target() {
+      if (scope() === 'all') return total;
+      var n = 0, inside = -1; // cộng SP của danh mục được chọn và con cháu (không đếm trùng)
+      boxes.forEach(function (b) {
+        var d = +b.dataset.depth;
+        if (inside >= 0 && d <= inside) inside = -1;
+        if (inside < 0 && b.checked) inside = d;
+        if (inside >= 0) n += counts[b.value] || 0;
+      });
+      return n;
+    }
+    function update() {
+      catWrap.classList.toggle('off', scope() === 'all');
+      info.textContent = 'Sẽ ghi đè mô tả của ' + target() + ' sản phẩm';
+    }
+    ba.addEventListener('change', update);
+    update();
+    document.getElementById('baGo').addEventListener('click', function (e) {
+      var f = [].slice.call(ba.querySelectorAll('input[name="bulk_fields[]"]:checked')).map(function (x) { return x.parentNode.textContent.trim(); });
+      var n = target();
+      if (!f.length) { e.preventDefault(); alert('Chọn Mô tả ngắn và/hoặc Mô tả chi tiết để áp dụng.'); return; }
+      if (!n) { e.preventDefault(); alert('Chưa chọn danh mục nào (hoặc danh mục chưa có sản phẩm).'); return; }
+      if (!confirm('Thay ' + f.join(' + ') + ' của ' + n + ' sản phẩm bằng nội dung đang gõ?\nMô tả cũ của các sản phẩm đó sẽ bị ghi đè, không hoàn tác được.')) e.preventDefault();
+    });
+  }
+})();
+</script>
 <%- include('_foot') %>

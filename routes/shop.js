@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { db, parseProduct } = require('../db');
+const { db, parseProduct, smallImage, imageSrcset } = require('../db');
 const { sendOrderMail, sendLeadMail } = require('../mailer');
 
 const PER_PAGE = 24;
@@ -13,6 +13,25 @@ function descendantIds(id) {
   for (let i = 0; i < ids.length; i++)
     db.prepare('SELECT id FROM categories WHERE parent_id = ?').all(ids[i]).forEach(r => ids.push(r.id));
   return ids;
+}
+
+// Ảnh đại diện danh mục: dùng ảnh đã đặt trong admin; chưa có thì lấy ảnh 1 tranh trong danh mục (kể cả danh mục con),
+// ưu tiên tranh nổi bật → mới nhất. Mỗi danh mục cố gắng lấy tranh khác nhau để các ô không trùng ảnh.
+function withCovers(cats) {
+  const used = new Set();
+  return cats.map(c => {
+    if (c.image) return c;
+    const rows = db.prepare(`SELECT images FROM products WHERE active = 1 AND category_id IN (${descendantIds(c.id).join(',')})
+      ORDER BY featured DESC, id DESC LIMIT 20`).all();
+    let pick = '';
+    for (const r of rows) {
+      let img = ''; try { img = JSON.parse(r.images || '[]')[0] || ''; } catch (e) { /* bỏ qua */ }
+      if (img && !used.has(img)) { pick = img; break; }
+      if (img && !pick) pick = img;
+    }
+    if (pick) { used.add(pick); c = { ...c, srcset: imageSrcset(pick) }; pick = smallImage(pick); }
+    return { ...c, image: pick };
+  });
 }
 
 // ---------- SEO helpers ----------
@@ -31,10 +50,15 @@ function categoryTrail(cat) {
   return trail;
 }
 
+// Đánh giá khách hàng (admin nhập ở Quản trị → Đánh giá khách hàng)
+const REVIEW_SQL = `SELECT r.*, p.name AS product_name, p.slug AS product_slug FROM reviews r
+  LEFT JOIN products p ON p.id = r.product_id AND p.active = 1 WHERE r.active = 1`;
+const reviewsWhere = (where, params, limit) => db.prepare(`${REVIEW_SQL} AND ${where} ORDER BY r.sort_order, r.id DESC LIMIT ${limit}`).all(...params);
+
 router.get('/', (req, res) => {
   const featured = productList('p.featured = 1', [], 12);
   const newest = productList('p.is_new = 1', [], 12);
-  const homeCats = db.prepare('SELECT * FROM categories WHERE show_home = 1 ORDER BY sort_order').all();
+  const homeCats = withCovers(db.prepare('SELECT * FROM categories WHERE show_home = 1 ORDER BY sort_order').all());
   const sonDau = db.prepare("SELECT * FROM categories WHERE slug = 'tranh-son-dau'").get();
   const sonDauProducts = sonDau ? productList(`p.category_id IN (${descendantIds(sonDau.id).join(',')})`, [], 8) : [];
   const s = res.locals.settings, base = res.locals.baseUrl;
@@ -57,7 +81,8 @@ router.get('/', (req, res) => {
       },
     ],
   };
-  res.render('home', { title: null, heroSlides, featured, newest, homeCats, sonDau, sonDauProducts });
+  const homeReviews = reviewsWhere('r.show_home = 1', [], 12);
+  res.render('home', { title: null, heroSlides, featured, newest, homeCats, sonDau, sonDauProducts, homeReviews });
 });
 
 function renderListing(res, req, { title, description = '', where = '', params = [], category = null, subcats = [], trail = [], seo = {} }) {
@@ -85,7 +110,7 @@ router.get('/best-sellers', (req, res) => renderListing(res, req, { title: 'Sả
 router.get('/bst-moi', (req, res) => renderListing(res, req, { title: 'BST Tranh Mới', where: 'p.is_new = 1',
   seo: { description: listingDesc(res, 'Bộ sưu tập tranh treo tường mới nhất') } }));
 router.get('/collections', (req, res) => {
-  const cats = db.prepare('SELECT * FROM categories ORDER BY sort_order, name').all();
+  const cats = withCovers(db.prepare('SELECT * FROM categories ORDER BY sort_order, name').all());
   res.locals.seo = { description: listingDesc(res, 'Bộ sưu tập tranh theo chủ đề: phong cảnh, hoa, phong thủy, trừu tượng'),
     jsonld: [breadcrumbLd(res, [{ name: 'Trang chủ', url: '/' }, { name: 'Bộ Sưu Tập', url: '/collections' }])] };
   res.render('collections', { title: 'Bộ Sưu Tập', cats });
@@ -106,7 +131,7 @@ router.get('/danh-muc/:slug', (req, res, next) => {
   renderListing(res, req, { title: category.name, description: category.description, category, subcats, trail,
     where: `p.category_id IN (${descendantIds(category.id).join(',')})`,
     seo: {
-      description: category.description || listingDesc(res, `Mẫu ${category.name} đẹp, giá tốt`), image: category.image,
+      description: category.description || listingDesc(res, `Mẫu ${category.name} đẹp, giá tốt`), image: withCovers([category])[0].image,
       jsonld: [breadcrumbLd(res, [{ name: 'Trang chủ', url: '/' }, ...trail.map(c => ({ name: c.name, url: '/danh-muc/' + c.slug }))])],
     } });
 });
@@ -119,8 +144,8 @@ router.get('/san-pham/:slug', (req, res, next) => {
   const { baseUrl, absUrl, plain, settings: s } = res.locals;
   const trail = category ? categoryTrail(category) : [];
   const url = baseUrl + '/san-pham/' + product.slug;
-  const prices = product.variants.map(v => +v.price).filter(n => n > 0);
-  const single = product.sale_price > 0 && product.sale_price < product.price ? product.sale_price : product.price;
+  const prices = product.variants.map(v => v.final).filter(n => n > 0);
+  const single = product.min_price;
   const offerBase = { priceCurrency: 'VND', availability: 'https://schema.org/InStock', itemCondition: 'https://schema.org/NewCondition', url };
   const offers = prices.length > 1
     ? { '@type': 'AggregateOffer', lowPrice: Math.min(...prices), highPrice: Math.max(...prices), offerCount: prices.length, ...offerBase }
@@ -142,7 +167,11 @@ router.get('/san-pham/:slug', (req, res, next) => {
         { name: product.name, url: '/san-pham/' + product.slug }]),
     ],
   };
-  res.render('product', { title: product.meta_title || product.name, metaDesc: desc, product, category, trail, related });
+  // Đánh giá riêng của sản phẩm; chưa có thì hiện đánh giá chung về cửa hàng
+  const ownReviews = reviewsWhere('r.product_id = ?', [product.id], 20);
+  const reviews = ownReviews.length ? ownReviews : reviewsWhere('r.product_id IS NULL', [], 8);
+  const reviewSummary = ownReviews.length ? { avg: ownReviews.reduce((a, r) => a + r.rating, 0) / ownReviews.length, count: ownReviews.length } : null;
+  res.render('product', { title: product.meta_title || product.name, metaDesc: desc, product, category, trail, related, reviews, reviewSummary });
 });
 
 router.get('/trang/:slug', (req, res, next) => {
@@ -150,7 +179,7 @@ router.get('/trang/:slug', (req, res, next) => {
   if (!page) return next();
   const promoMsg = req.session.promoMsg; delete req.session.promoMsg;
   res.locals.seo = {
-    description: res.locals.plain(page.content.replace('[form_uu_dai]', '').replace(/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>/gi, ' ')), // bỏ tiêu đề để mô tả không lặp
+    description: res.locals.plain(res.locals.richText(page.content).replace('[form_uu_dai]', '').replace(/<h[1-6][^>]*>[\s\S]*?<\/h[1-6]>/gi, ' ')), // bỏ tiêu đề để mô tả không lặp
     jsonld: [breadcrumbLd(res, [{ name: 'Trang chủ', url: '/' }, { name: page.title, url: '/trang/' + page.slug }])],
   };
   res.render('page', { title: page.title, page, promoMsg });
@@ -192,7 +221,8 @@ router.post('/dang-ky-uu-dai', (req, res) => {
   const b = req.body;
   const src = /^[a-z0-9-]{1,100}$/.test(b.source || '') ? b.source : '';
   const back = (type, msg) => { req.session.promoMsg = { type, msg }; res.redirect((src ? '/trang/' + src : '/') + '#uu-dai'); };
-  if (b.website) return back('success', 'Cảm ơn bạn đã đăng ký!'); // bẫy bot (ô ẩn)
+  // Bẫy bot: ô ẩn có tên lạ (không đặt tên kiểu "website"/"email" vì trình duyệt tự điền → chặn nhầm khách thật)
+  if (b.pf_hp_x7) { console.warn('[uu-dai] chặn bot (ô bẫy có dữ liệu)', req.ip); return back('success', 'Cảm ơn bạn đã đăng ký!'); }
   const now = Date.now(), hits = (leadHits.get(req.ip) || []).filter(t => now - t < 10 * 60 * 1000);
   if (hits.length >= 5) return back('error', 'Bạn đã gửi quá nhiều lần, vui lòng thử lại sau ít phút.');
   const lead = {
@@ -216,12 +246,22 @@ router.get('/gio-hang', (req, res) => {
 
 router.post('/dat-hang', (req, res) => {
   res.locals.seo = { noindex: true, canonical: false };
-  const { customer_name, phone, email, address, note } = req.body;
+  const quick = req.body.quick === '1'; // đặt nhanh từ popup trang sản phẩm (không qua giỏ hàng)
+  const customer_name = String(req.body.customer_name || '').trim().slice(0, 100);
+  const phone = String(req.body.phone || '').trim().slice(0, 20);
+  const address = String(req.body.address || '').trim().slice(0, 300);
+  const email = String(req.body.email || '').trim().slice(0, 100);
+  const note = quick ? 'Đặt nhanh từ trang sản phẩm' : String(req.body.note || '').trim().slice(0, 1000);
+  // Popup đặt nhanh gửi bằng JS (fetch) -> trả JSON để ở lại trang sản phẩm; gửi form thường -> trang cảm ơn như cũ
+  const wantsJson = req.get('x-requested-with') === 'fetch';
+  const fail = (error) => wantsJson ? res.status(400).json({ ok: false, error }) : res.status(400).render('cart', { title: 'Giỏ hàng', error });
+  const done = (orderId) => wantsJson ? res.json({ ok: true, orderId }) : res.render('thank-you', { title: 'Đặt hàng thành công', orderId, quick });
+  if (req.body.pf_hp_x7) { console.warn('[dat-hang] chặn bot (ô bẫy có dữ liệu)', req.ip); return done('—'); }
   let items = [];
   try { items = JSON.parse(req.body.items || '[]'); } catch {}
-  if (!customer_name || !phone || !items.length) {
-    return res.status(400).render('cart', { title: 'Giỏ hàng', error: 'Vui lòng nhập họ tên, số điện thoại và chọn sản phẩm.' });
-  }
+  if (!customer_name || !phone || !items.length) return fail('Vui lòng nhập họ tên, số điện thoại và chọn sản phẩm.');
+  if (!/^[0-9]{10,11}$/.test(phone.replace(/[\s.+-]/g, ''))) return fail('Số điện thoại phải gồm 10 – 11 chữ số.');
+  if (quick && !address) return fail('Vui lòng nhập địa chỉ giao hàng.');
   // Tính lại giá phía server, không tin giá từ trình duyệt
   const clean = [];
   let total = 0;
@@ -229,18 +269,18 @@ router.post('/dat-hang', (req, res) => {
     const p = parseProduct(db.prepare('SELECT * FROM products WHERE id = ? AND active = 1').get(+it.id));
     if (!p) continue;
     const v = p.variants.find(v => v.name === it.variant);
-    const price = v ? +v.price : (p.sale_price || p.price);
+    const price = v ? v.final : p.min_price;
     const qty = Math.max(1, Math.min(99, parseInt(it.qty) || 1));
     clean.push({ id: p.id, name: p.name, code: p.code, variant: v ? v.name : '', price, qty });
     total += price * qty;
   }
-  if (!clean.length) return res.status(400).render('cart', { title: 'Giỏ hàng', error: 'Sản phẩm không hợp lệ.' });
+  if (!clean.length) return fail('Sản phẩm không hợp lệ hoặc đã ngừng bán.');
   const id = db.prepare('INSERT INTO orders(customer_name, phone, email, address, note, items, total) VALUES(?,?,?,?,?,?,?)')
     .run(customer_name, phone, email || '', address || '', note || '', JSON.stringify(clean), total).lastInsertRowid;
   // Gửi mail chạy nền, không bắt khách chờ
   sendOrderMail({ id, customer_name, phone, email: email || '', address: address || '', note: note || '', items: clean, total },
     `${req.protocol}://${req.get('host')}`);
-  res.render('thank-you', { title: 'Đặt hàng thành công', orderId: id });
+  done(id);
 });
 
 module.exports = router;

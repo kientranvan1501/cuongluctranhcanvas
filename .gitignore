@@ -4,3 +4,4 @@ data/*.db-*
 public/uploads/*
 !public/uploads/.gitkeep
 .env
+data/.session-secret

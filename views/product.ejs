@@ -3,7 +3,7 @@
   <nav class="breadcrumb" aria-label="Breadcrumb"><a href="/">Trang chủ</a> / <% trail.forEach(function (c) { %><a href="/danh-muc/<%= c.slug %>"><%= c.name %></a> / <% }) %><span aria-current="page"><%= product.name %></span></nav>
   <div class="product-detail">
     <div class="gallery">
-      <div class="main-img"><img id="mainImg" src="<%= product.thumb %>" alt="<%= product.name %><%= product.code ? ' - ' + product.code : '' %>" fetchpriority="high" decoding="async"></div>
+      <div class="main-img" id="mainImgBox" title="Bấm để xem ảnh lớn"><span class="zoom-hint" aria-hidden="true">⤢ Phóng to</span><img id="mainImg" src="<%= product.thumb %>" alt="<%= product.name %><%= product.code ? ' - ' + product.code : '' %>" fetchpriority="high" decoding="async"></div>
       <% if (product.images.length > 1) { %>
         <div class="thumbs"><% product.images.forEach(function(img, i){ %><img src="<%= img %>" class="<%= i===0?'active':'' %>" data-full="<%= img %>" alt="<%= product.name %> - ảnh <%= i + 1 %>" loading="lazy" decoding="async"><% }) %></div>
       <% } %>
@@ -11,10 +11,11 @@
     <div class="info">
       <h1><%= product.name %><% if (product.code) { %> - <%= product.code %><% } %></h1>
       <% if (product.vendor) { %><p class="vendor"><%= product.vendor %></p><% } %>
+      <% if (reviewSummary) { %><a class="rv-mini" href="#danh-gia"><span class="stars"><%= '★'.repeat(Math.round(reviewSummary.avg)) %><span class="off"><%= '★'.repeat(5 - Math.round(reviewSummary.avg)) %></span></span> <%= reviewSummary.count %> đánh giá</a><% } %>
+      <% const v0 = product.variants[0], curPrice = v0 ? v0.final : product.min_price, curCompare = v0 ? (v0.final < v0.price ? v0.price : 0) : product.compare_price; %>
       <div class="price big" id="priceBox">
-        <% if (product.variants.length) { %><%= formatPrice(product.variants[0].price) %>
-        <% } else if (product.sale_price && product.sale_price < product.price) { %><span class="sale"><%= formatPrice(product.sale_price) %></span> <del><%= formatPrice(product.price) %></del>
-        <% } else { %><%= formatPrice(product.price) %><% } %>
+        <% if (curCompare) { %><span class="sale"><%= formatPrice(curPrice) %></span> <del><%= formatPrice(curCompare) %></del>
+        <% } else { %><%= formatPrice(curPrice) %><% } %>
       </div>
       <% if (product.short_desc) { %><p><%= product.short_desc %></p><% } %>
       <% if (product.variants.length) { %>
@@ -22,23 +23,60 @@
           <label>Kích thước:</label>
           <div class="variant-list">
             <% product.variants.forEach(function(v, i){ %>
-              <button type="button" class="variant <%= i===0?'active':'' %>" data-name="<%= v.name %>" data-price="<%= v.price %>"><%= v.name %></button>
+              <button type="button" class="variant <%= i===0?'active':'' %>" data-name="<%= v.name %>" data-price="<%= v.final %>" data-compare="<%= v.final < v.price ? v.price : 0 %>"><%= v.name %></button>
             <% }) %>
           </div>
         </div>
       <% } %>
       <div class="qty-row">
-        <input type="number" id="qty" value="1" min="1" max="99" aria-label="Số lượng">
+        <div class="qty-box">
+          <button type="button" class="qty-btn" data-step="-1" aria-label="Giảm số lượng">−</button>
+          <input type="number" id="qty" value="1" min="1" max="99" inputmode="numeric" aria-label="Số lượng">
+          <button type="button" class="qty-btn" data-step="1" aria-label="Tăng số lượng">+</button>
+        </div>
         <button class="btn" id="addCart"
           data-id="<%= product.id %>" data-name="<%= product.name %><%= product.code ? ' - ' + product.code : '' %>"
-          data-img="<%= product.thumb %>" data-slug="<%= product.slug %>"
+          data-img="<%= product.card %>" data-slug="<%= product.slug %>"
           data-variant="<%= product.variants.length ? product.variants[0].name : '' %>"
-          data-price="<%= product.variants.length ? product.variants[0].price : (product.sale_price && product.sale_price < product.price ? product.sale_price : product.price) %>">Thêm vào giỏ</button>
+          data-price="<%= curPrice %>">Thêm vào giỏ</button>
       </div>
+      <button type="button" class="btn btn-accent full quick-btn" id="quickOrderBtn">Để lại thông tin để đặt hàng</button>
       <a class="btn btn-outline full" href="tel:<%= (settings.hotline||'').replace(/\D/g,'') %>">Gọi tư vấn: <%= settings.hotline %></a>
-      <div class="rich desc"><%- product.description %></div>
+      <div class="rich desc"><%- richText(product.description) %></div>
     </div>
   </div>
+
+  <dialog class="img-viewer" id="imgViewer" aria-label="Xem ảnh lớn">
+    <button type="button" class="iv-close" aria-label="Đóng">×</button>
+    <div class="iv-stage"><img id="ivImg" alt="<%= product.name %>"></div>
+    <p class="iv-tip">Bấm vào ảnh để xem 100% · Esc để đóng</p>
+  </dialog>
+
+  <dialog class="quick-order" id="quickOrder" aria-labelledby="qoTitle">
+    <form method="post" action="/dat-hang" id="qoForm">
+      <button type="button" class="qo-close" id="qoClose" aria-label="Đóng">×</button>
+      <h2 id="qoTitle">Để lại thông tin đặt hàng</h2>
+      <p class="qo-sub">Chúng tôi sẽ gọi lại xác nhận đơn trong thời gian sớm nhất.</p>
+      <div class="qo-item">
+        <img src="<%= product.card %>" alt="">
+        <div>
+          <div class="qo-name"><%= product.name %><%= product.code ? ' - ' + product.code : '' %></div>
+          <div class="qo-meta" id="qoMeta"></div>
+        </div>
+      </div>
+      <label>Họ và tên *<input name="customer_name" required maxlength="100" autocomplete="name"></label>
+      <label>Số điện thoại *<input name="phone" id="qoPhone" required type="tel" inputmode="numeric" autocomplete="tel"
+        pattern="[0-9]{10,11}" maxlength="11" placeholder="VD: 0901234567"></label>
+      <p class="qo-err" id="qoPhoneErr" hidden>Số điện thoại phải gồm 10 – 11 chữ số.</p>
+      <label>Địa chỉ giao hàng *<textarea name="address" required rows="2" maxlength="300" autocomplete="street-address"></textarea></label>
+      <input type="hidden" name="items" id="qoItems">
+      <input type="hidden" name="quick" value="1">
+      <input type="text" name="pf_hp_x7" tabindex="-1" autocomplete="off" value="" class="hp" aria-hidden="true">
+      <p class="qo-err" id="qoFormErr" role="alert" hidden></p>
+      <button class="btn full" id="qoSubmit">Gửi thông tin đặt hàng</button>
+    </form>
+  </dialog>
+  <%- include('partials/reviews-section', { reviews: reviews, heading: reviewSummary ? 'Đánh giá từ khách hàng' : 'Khách hàng nói gì về chúng tôi', summary: reviewSummary, showProduct: !reviewSummary, inContainer: true }) %>
   <% if (related.length) { %>
     <section class="section">
       <div class="section-head"><h2>Sản phẩm liên quan</h2></div>

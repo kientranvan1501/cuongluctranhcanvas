@@ -1,0 +1,29 @@
+<%- include('_head') %>
+<div class="card flush">
+  <div class="card-head"><p class="muted">Đánh giá gắn với sản phẩm hiện ở trang sản phẩm đó. Đánh giá chung (không chọn sản phẩm) hiện ở trang chủ và ở trang các sản phẩm chưa có đánh giá riêng.</p><a class="btn btn-sm" href="/admin/reviews/new"><%- icon('plus') %>Thêm đánh giá</a></div>
+  <div class="table-wrap" style="margin-top:16px">
+  <table class="table stack">
+    <thead><tr><th>Khách hàng</th><th>Đánh giá</th><th>Sản phẩm</th><th>Trang chủ</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+      <% reviews.forEach(function(r){ %>
+        <tr>
+          <td><div class="person">
+            <% if (r.image) { %><img class="avatar avatar-img" src="<%= r.image %>" alt="" loading="lazy"><% } else { %><span class="avatar"><%= r.name.trim()[0] %></span><% } %>
+            <div><a href="/admin/reviews/<%= r.id %>/edit"><b><%= r.name %></b></a><% if (r.location) { %><small><%= r.location %></small><% } %></div></div></td>
+          <td><span class="stars" aria-label="<%= r.rating %> sao"><%= '★'.repeat(r.rating) %><span class="off"><%= '★'.repeat(5 - r.rating) %></span></span>
+            <div class="cell-note"><%= r.content.length > 120 ? r.content.slice(0, 120) + '…' : r.content %></div></td>
+          <td><% if (r.product_name) { %><a href="/san-pham/<%= r.product_slug %>" target="_blank" rel="noopener" class="small"><%= r.product_name %></a><% } else { %><span class="muted small">Đánh giá chung</span><% } %></td>
+          <td><% if (r.show_home) { %><span class="badge tone-green">Hiện</span><% } else { %><span class="muted">—</span><% } %></td>
+          <td><span class="badge tone-<%= r.active ? 'green' : 'gray' %>"><%= r.active ? 'Đang hiển thị' : 'Đang ẩn' %></span></td>
+          <td class="actions">
+            <a class="btn btn-sm btn-gray" href="/admin/reviews/<%= r.id %>/edit"><%- icon('edit') %>Sửa</a>
+            <form method="post" action="/admin/reviews/<%= r.id %>/delete" data-confirm="Xóa đánh giá của <%= r.name %>?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-ghost danger" title="Xóa" aria-label="Xóa"><%- icon('trash') %></button></form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!reviews.length) { %><tr><td colspan="6" class="empty"><%- icon('star') %>Chưa có đánh giá nào. Bấm “Thêm đánh giá” để thêm nhận xét của khách.</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<%- include('_foot') %>

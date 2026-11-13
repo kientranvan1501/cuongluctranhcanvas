@@ -3,18 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
+<meta name="robots" content="noindex, nofollow">
 <title>Đăng nhập quản trị</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="<%= asset('/css/admin.css') %>">
+<% if (settings.favicon) { %><link rel="icon" href="<%= settings.favicon %>"><% } %>
 </head>
 <body class="login-page">
-  <form method="post" class="login-box">
-    <h1><%= settings.site_name %></h1>
-    <p class="muted">Đăng nhập trang quản trị</p>
-    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
-    <label>Tên đăng nhập<input name="username" required autofocus></label>
-    <label>Mật khẩu<input name="password" type="password" required></label>
-    <button class="btn full">Đăng nhập</button>
-  </form>
+  <div style="width:100%;max-width:400px">
+    <form method="post" class="login-box">
+      <div class="brand-mark"><%= String(settings.site_name || 'Admin').trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase() %></div>
+      <h1><%= settings.site_name %></h1>
+      <p class="muted">Đăng nhập để vào trang quản trị</p>
+      <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+      <label>Tên đăng nhập<input name="username" required autofocus autocomplete="username"></label>
+      <label>Mật khẩu<input name="password" type="password" required autocomplete="current-password"></label>
+      <button class="btn">Đăng nhập</button>
+    </form>
+    <p class="login-foot"><a href="/">← Về trang chủ website</a></p>
+  </div>
 </body>
 </html>

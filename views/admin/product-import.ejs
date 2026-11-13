@@ -1,0 +1,95 @@
+<%- include('_head') %>
+<% const r = result; %>
+<% if (r && r.error) { %><div class="alert alert-error"><%= r.error %></div><% } %>
+
+<% if (r && r.results) { const s = r.summary; %>
+  <div class="card">
+    <div class="card-head">
+      <h2 style="margin:0"><%= r.dryRun ? 'Kết quả kiểm tra (chưa lưu)' : 'Đã nhập xong' %></h2>
+      <a class="btn btn-sm btn-gray" href="/admin/products">← Danh sách sản phẩm</a>
+    </div>
+    <div class="imp-stats">
+      <span class="st st-ok"><b><%= s.insert %></b><%= r.dryRun ? 'sẽ thêm mới' : 'đã thêm mới' %></span>
+      <span class="st st-up"><b><%= s.update %></b><%= r.dryRun ? 'sẽ cập nhật' : 'đã cập nhật' %></span>
+      <span class="st st-skip"><b><%= s.skip %></b>bỏ qua (trùng mã)</span>
+      <span class="st st-err"><b><%= s.error %></b>dòng lỗi<%= r.dryRun ? '' : ' (không nhập)' %></span>
+    </div>
+    <% if (r.dryRun) { %>
+      <% if (s.insert + s.update) { %>
+        <form method="post" enctype="multipart/form-data" action="/admin/products/import" class="imp-confirm">
+          <input type="hidden" name="_csrf" value="<%= csrf %>"><input type="hidden" name="use_job" value="1"><input type="hidden" name="mode" value="import">
+          <button class="btn" data-busy="Đang nhập… (có ảnh từ link thì cần chờ tải ảnh)"><%- icon('check') %>Nhập <%= s.insert + s.update %> sản phẩm hợp lệ</button>
+          <span class="muted"><%= s.error ? 'Các dòng lỗi sẽ bị bỏ qua — hoặc sửa file rồi kiểm tra lại bên dưới.' : 'Mọi dòng đều hợp lệ.' %></span>
+        </form>
+      <% } else { %><p class="muted">Không có dòng nào nhập được. Sửa file theo các lỗi bên dưới rồi kiểm tra lại.</p><% } %>
+    <% } %>
+    <div class="table-wrap">
+      <table class="table imp-table">
+        <thead><tr><th>Dòng</th><th>Mã / Tên</th><th>Danh mục</th><th>Kết quả</th><th>Ghi chú</th></tr></thead>
+        <tbody>
+          <% r.results.forEach(function(x){ %>
+            <tr class="<%= x.action === 'error' ? 'row-err' : '' %>">
+              <td><%= x.line %></td>
+              <td><% if (!r.dryRun && x.id) { %><a href="/admin/products/<%= x.id %>/edit"><strong><%= x.name %></strong></a><% } else { %><strong><%= x.name || '—' %></strong><% } %><br><span class="muted"><%= x.code %></span></td>
+              <td><%= x.catName || '' %></td>
+              <td><% const L = { insert: ['ok', r.dryRun ? 'Thêm mới' : 'Đã thêm'], update: ['up', r.dryRun ? 'Cập nhật' : 'Đã cập nhật'], skip: ['skip', 'Bỏ qua'], error: ['err', 'Lỗi'] }[x.action]; %>
+                <span class="pill pill-<%= L[0] %>"><%= L[1] %></span>
+                <% if (x.imgs && x.imgs.length) { %><br><span class="muted"><%= x.imgs.length %> ảnh</span><% } %></td>
+              <td>
+                <% x.errors.forEach(function(e){ %><div class="t-err">✖ <%= e %></div><% }) %>
+                <% x.warns.forEach(function(w){ %><div class="t-warn">⚠ <%= w %></div><% }) %>
+              </td>
+            </tr>
+          <% }) %>
+          <% if (!r.results.length) { %><tr><td colspan="5" class="muted">File không có dòng sản phẩm nào.</td></tr><% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
+
+<div class="card narrow-wide">
+  <h2><%= r && r.results && !r.dryRun ? 'Nhập file khác' : 'Nhập sản phẩm hàng loạt' %></h2>
+  <ol class="imp-steps">
+    <li><a href="/admin/products/import/template.xlsx"><strong>Tải file Excel mẫu</strong></a> — có sẵn danh sách danh mục và hướng dẫn. Muốn sửa hàng loạt sản phẩm đang có: dùng <a href="/admin/products/export.xlsx">Xuất Excel</a>, sửa rồi nhập lại.</li>
+    <li>Điền mỗi dòng một sản phẩm. Cột <strong>Ảnh</strong> ghi tên file ảnh (chọn ảnh ở bước 3) hoặc dán link ảnh https://…</li>
+    <li>Chọn file Excel và các file ảnh, bấm <strong>Kiểm tra trước</strong> để xem lỗi, rồi bấm Nhập.</li>
+  </ol>
+  <form method="post" enctype="multipart/form-data" action="/admin/products/import" id="impForm">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <label>File Excel (.xlsx) *<input type="file" name="excel" accept=".xlsx" required></label>
+    <label>Ảnh sản phẩm (chọn nhiều ảnh cùng lúc, tối đa 300 ảnh, mỗi ảnh ≤ 10MB)
+      <input type="file" name="images" multiple accept=".jpg,.jpeg,.png,.webp,.gif" id="impImages"></label>
+    <p class="muted" id="impImgInfo"></p>
+    <label>Nếu Mã SP đã có trên web
+      <select name="on_duplicate">
+        <option value="update" <%= opts.onDuplicate !== 'skip' ? 'selected' : '' %>>Cập nhật sản phẩm đó (ô trống giữ nguyên giá trị cũ)</option>
+        <option value="skip" <%= opts.onDuplicate === 'skip' ? 'selected' : '' %>>Bỏ qua, không thay đổi</option>
+      </select>
+    </label>
+    <div class="btn-row">
+      <button class="btn" name="mode" value="check" data-busy="Đang kiểm tra…"><%- icon('search') %>Kiểm tra trước</button>
+      <button class="btn btn-gray" name="mode" value="import" data-busy="Đang nhập… (có ảnh từ link thì cần chờ tải ảnh)">Nhập luôn</button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  var inp = document.getElementById('impImages'), info = document.getElementById('impImgInfo');
+  inp && inp.addEventListener('change', function () {
+    var n = inp.files.length, size = 0;
+    for (var i = 0; i < n; i++) size += inp.files[i].size;
+    info.textContent = n ? 'Đã chọn ' + n + ' ảnh (' + (size / 1048576).toFixed(1) + ' MB)' : '';
+  });
+  // khóa nút khi đang gửi để không bấm 2 lần
+  document.querySelectorAll('form').forEach(function (f) {
+    f.addEventListener('submit', function (e) {
+      var b = e.submitter || f.querySelector('button[data-busy]');
+      if (!b || !b.dataset.busy) return;
+      setTimeout(function () { f.querySelectorAll('button').forEach(function (x) { x.disabled = true; }); b.textContent = b.dataset.busy; }, 0);
+    });
+  });
+})();
+</script>
+<%- include('_foot') %>

@@ -1,43 +1,48 @@
 <%- include('_head') %>
-<div class="card">
+<div class="card flush">
   <div class="card-head">
     <form class="filters">
-      <input name="q" value="<%= q %>" placeholder="Tìm theo tên hoặc mã...">
-      <select name="cat">
-        <option value="">-- Tất cả danh mục --</option>
+      <label class="search" style="margin:0"><%- icon('search') %><input name="q" value="<%= q %>" placeholder="Tìm theo tên hoặc mã…" aria-label="Tìm sản phẩm"></label>
+      <select name="cat" aria-label="Danh mục" onchange="this.form.submit()">
+        <option value="">Tất cả danh mục</option>
         <% cats.forEach(function(c){ %><option value="<%= c.id %>" <%= cat===c.id?'selected':'' %>><%= '— '.repeat(c.depth) %><%= c.name %></option><% }) %>
       </select>
       <button class="btn btn-sm btn-gray">Lọc</button>
+      <% if (q || cat) { %><a class="btn btn-sm btn-ghost" href="/admin/products">Xóa lọc</a><% } %>
     </form>
-    <a class="btn btn-sm" href="/admin/products/new">+ Thêm sản phẩm</a>
+    <div class="btn-row">
+      <a class="btn btn-sm btn-gray" href="/admin/products/export.xlsx?q=<%= encodeURIComponent(q) %>&cat=<%= cat||'' %>" title="Tải danh sách sản phẩm (theo bộ lọc hiện tại) ra file Excel"><%- icon('download') %>Xuất Excel</a>
+      <a class="btn btn-sm btn-gray" href="/admin/products/import"><%- icon('upload') %>Nhập Excel</a>
+      <a class="btn btn-sm" href="/admin/products/new"><%- icon('plus') %>Thêm sản phẩm</a>
+    </div>
   </div>
-  <p class="muted"><%= total %> sản phẩm</p>
-  <div class="table-wrap">
+  <p class="muted small" style="margin:12px 22px 0"><%= total %> sản phẩm</p>
+  <div class="table-wrap" style="margin-top:10px">
   <table class="table">
-    <thead><tr><th>Ảnh</th><th>Tên / Mã</th><th>Danh mục</th><th>Giá</th><th>Hiển thị</th><th></th></tr></thead>
+    <thead><tr><th>Ảnh</th><th>Sản phẩm</th><th>Danh mục</th><th class="num">Giá</th><th>Trạng thái</th><th></th></tr></thead>
     <tbody>
       <% products.forEach(function(p){ %>
         <tr>
-          <td><img class="thumb" src="<%= p.thumb %>" alt=""></td>
-          <td><a href="/admin/products/<%= p.id %>/edit"><strong><%= p.name %></strong></a><br><span class="muted"><%= p.code %></span>
+          <td><a href="/admin/products/<%= p.id %>/edit"><img class="thumb" src="<%= p.card %>" alt="" loading="lazy"></a></td>
+          <td><a href="/admin/products/<%= p.id %>/edit"><b><%= p.name %></b></a><br><span class="muted small"><%= p.code %></span>
             <% if (p.featured) { %><span class="tag">Nổi bật</span><% } %><% if (p.is_new) { %><span class="tag">Mới</span><% } %></td>
           <td><%= p.cat_name || '—' %></td>
-          <td><%= p.has_range ? 'Từ ' : '' %><%= formatPrice(p.min_price) %></td>
-          <td><%= p.active ? '✅' : '⛔ Ẩn' %></td>
+          <td class="num"><span class="muted small"><%= p.has_range ? 'Từ ' : '' %></span><b><%= formatPrice(p.min_price) %></b></td>
+          <td><span class="badge tone-<%= p.active ? 'green' : 'gray' %>"><%= p.active ? 'Đang hiển thị' : 'Đang ẩn' %></span></td>
           <td class="actions">
-            <a class="btn btn-sm btn-gray" href="/admin/products/<%= p.id %>/edit">Sửa</a>
-            <a class="btn btn-sm btn-gray" href="/san-pham/<%= p.slug %>" target="_blank">Xem</a>
-            <form method="post" action="/admin/products/<%= p.id %>/duplicate"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-gray">Nhân bản</button></form>
-            <form method="post" action="/admin/products/<%= p.id %>/delete" data-confirm="Xóa sản phẩm này?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form>
+            <a class="btn btn-sm btn-gray" href="/admin/products/<%= p.id %>/edit"><%- icon('edit') %>Sửa</a>
+            <a class="btn btn-sm btn-ghost" href="/san-pham/<%= p.slug %>" target="_blank" rel="noopener" title="Xem trên web" aria-label="Xem trên web"><%- icon('eye') %></a>
+            <form method="post" action="/admin/products/<%= p.id %>/duplicate"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-ghost" title="Nhân bản" aria-label="Nhân bản"><%- icon('copy') %></button></form>
+            <form method="post" action="/admin/products/<%= p.id %>/delete" data-confirm="Xóa sản phẩm này?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-ghost danger" title="Xóa" aria-label="Xóa"><%- icon('trash') %></button></form>
           </td>
         </tr>
       <% }) %>
-      <% if (!products.length) { %><tr><td colspan="6" class="muted">Không có sản phẩm.</td></tr><% } %>
+      <% if (!products.length) { %><tr><td colspan="6" class="empty"><%- icon('image') %>Không có sản phẩm.</td></tr><% } %>
     </tbody>
   </table>
   </div>
   <% if (pages > 1) { %>
-    <div class="pagination"><% for (let i = 1; i <= pages; i++) { %><a class="<%= i===page?'active':'' %>" href="?q=<%= encodeURIComponent(q) %>&cat=<%= cat||'' %>&page=<%= i %>"><%= i %></a><% } %></div>
+    <div class="pagination" style="padding:0 22px 18px"><% for (let i = 1; i <= pages; i++) { %><a class="<%= i===page?'active':'' %>" href="?q=<%= encodeURIComponent(q) %>&cat=<%= cat||'' %>&page=<%= i %>"><%= i %></a><% } %></div>
   <% } %>
 </div>
 <%- include('_foot') %>

@@ -52,28 +52,32 @@ if (sonDau) sections.push({ title: sonDau.name, list: sonDauProducts, link: '/da
 <% sections.forEach(function(s){ %>
   <% if (s.cats && homeCats.length) { %>
   <section class="section container">
-    <div class="section-head"><h2>Bộ Sưu Tập</h2><a href="/collections">Xem thêm →</a></div>
+    <div class="section-head"><h2>Bộ Sưu Tập</h2></div>
     <div class="carousel">
       <button class="car-btn prev" aria-label="Trước">‹</button>
       <div class="car-track">
         <% homeCats.forEach(function(c){ %>
-          <a class="cat-tile" href="/danh-muc/<%= c.slug %>"><img src="<%= c.image || '/img/no-image.svg' %>" alt="<%= c.name %>" loading="lazy"><span><%= c.name %></span></a>
+          <a class="cat-tile" href="/danh-muc/<%= c.slug %>"><img src="<%= c.image || '/img/no-image.svg' %>"<% if (c.srcset) { %> srcset="<%= c.srcset %>" sizes="(max-width: 720px) 50vw, (max-width: 1024px) 33vw, 310px"<% } %> alt="<%= c.name %>" loading="lazy" decoding="async"><span><%= c.name %></span></a>
         <% }) %>
       </div>
       <button class="car-btn next" aria-label="Sau">›</button>
     </div>
+    <div class="more-row"><a class="btn btn-outline more-btn" href="/collections">Xem thêm bộ sưu tập</a></div>
   </section>
   <% } else if (s.list && s.list.length) { %>
   <section class="section container">
-    <div class="section-head"><h2><%= s.title %></h2><a href="<%= s.link %>">Xem thêm →</a></div>
+    <div class="section-head"><h2><%= s.title %></h2></div>
     <div class="carousel">
       <button class="car-btn prev" aria-label="Trước">‹</button>
       <div class="car-track"><% s.list.forEach(function(p){ %><%- include('partials/product-card', { p: p }) %><% }) %></div>
       <button class="car-btn next" aria-label="Sau">›</button>
     </div>
+    <div class="more-row"><a class="btn btn-outline more-btn" href="<%= s.link %>">Xem thêm</a></div>
   </section>
   <% } %>
 <% }) %>
+
+<%- include('partials/reviews-section', { reviews: homeReviews, heading: 'Khách hàng nói gì về chúng tôi', showProduct: true }) %>
 
 <section class="values">
   <div class="container values-grid">

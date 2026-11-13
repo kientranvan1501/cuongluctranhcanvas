@@ -1,22 +1,26 @@
 <%- include('_head') %>
-<div class="card">
-  <div class="card-head"><p class="muted">Trang chính sách, liên hệ, giới thiệu... Trang thuộc nhóm "Chính sách" sẽ hiện ở footer.</p><a class="btn btn-sm" href="/admin/pages/new">+ Thêm trang</a></div>
+<div class="card flush">
+  <div class="card-head"><p class="muted">Trang chính sách, liên hệ, giới thiệu… Trang thuộc nhóm "Chính sách" sẽ hiện ở footer.</p><a class="btn btn-sm" href="/admin/pages/new"><%- icon('plus') %>Thêm trang</a></div>
+  <div class="table-wrap" style="margin-top:16px">
   <table class="table">
-    <thead><tr><th>Tiêu đề</th><th>Đường dẫn</th><th>Footer</th><th>Hiển thị</th><th></th></tr></thead>
+    <thead><tr><th>Tiêu đề</th><th>Đường dẫn</th><th>Footer</th><th>Trạng thái</th><th></th></tr></thead>
     <tbody>
       <% pages.forEach(function(pg){ %>
         <tr>
-          <td><a href="/admin/pages/<%= pg.id %>/edit"><strong><%= pg.title %></strong></a></td>
-          <td><a href="/trang/<%= pg.slug %>" target="_blank" class="muted">/trang/<%= pg.slug %></a></td>
-          <td><%= pg.footer_group === 'policy' ? 'Chính sách' : '' %></td>
-          <td><%= pg.active ? '✅' : '⛔' %></td>
+          <td><a href="/admin/pages/<%= pg.id %>/edit"><b><%= pg.title %></b></a></td>
+          <td><a href="/trang/<%= pg.slug %>" target="_blank" rel="noopener" class="muted small">/trang/<%= pg.slug %></a></td>
+          <td><% if (pg.footer_group === 'policy') { %><span class="tag">Chính sách</span><% } else { %><span class="muted">—</span><% } %></td>
+          <td><span class="badge tone-<%= pg.active ? 'green' : 'gray' %>"><%= pg.active ? 'Đang hiển thị' : 'Đang ẩn' %></span></td>
           <td class="actions">
-            <a class="btn btn-sm btn-gray" href="/admin/pages/<%= pg.id %>/edit">Sửa</a>
-            <form method="post" action="/admin/pages/<%= pg.id %>/delete" data-confirm="Xóa trang này?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form>
+            <a class="btn btn-sm btn-gray" href="/admin/pages/<%= pg.id %>/edit"><%- icon('edit') %>Sửa</a>
+            <a class="btn btn-sm btn-ghost" href="/trang/<%= pg.slug %>" target="_blank" rel="noopener" title="Xem trên web" aria-label="Xem trên web"><%- icon('eye') %></a>
+            <form method="post" action="/admin/pages/<%= pg.id %>/delete" data-confirm="Xóa trang này?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-ghost danger" title="Xóa" aria-label="Xóa"><%- icon('trash') %></button></form>
           </td>
         </tr>
       <% }) %>
+      <% if (!pages.length) { %><tr><td colspan="5" class="empty"><%- icon('file') %>Chưa có trang nào.</td></tr><% } %>
     </tbody>
   </table>
+  </div>
 </div>
 <%- include('_foot') %>

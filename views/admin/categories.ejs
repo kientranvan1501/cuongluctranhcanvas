@@ -1,24 +1,26 @@
 <%- include('_head') %>
-<div class="card">
-  <div class="card-head"><p class="muted">Danh mục cấp 1 hiện trên menu chính; cấp 2–3 hiện trong menu xổ xuống.</p><a class="btn btn-sm" href="/admin/categories/new">+ Thêm danh mục</a></div>
-  <div class="table-wrap">
+<div class="card flush">
+  <div class="card-head"><p class="muted">Danh mục cấp 1 hiện trên menu chính; cấp 2–3 hiện trong menu xổ xuống. Bỏ tick "Hiện trên menu" trong form để ẩn một mục.</p><a class="btn btn-sm" href="/admin/categories/new"><%- icon('plus') %>Thêm danh mục</a></div>
+  <div class="table-wrap" style="margin-top:16px">
   <table class="table">
-    <thead><tr><th>Ảnh</th><th>Tên</th><th>Slug</th><th>Thứ tự</th><th>Trang chủ</th><th>SP</th><th></th></tr></thead>
+    <thead><tr><th>Ảnh</th><th>Tên danh mục</th><th>Slug</th><th class="num">Thứ tự</th><th>Menu</th><th>Trang chủ</th><th class="num">Sản phẩm</th><th></th></tr></thead>
     <tbody>
       <% cats.forEach(function(c){ %>
         <tr>
-          <td><% if (c.image) { %><img class="thumb" src="<%= c.image %>" alt=""><% } %></td>
-          <td style="padding-left:<%= 12 + c.depth*24 %>px"><%= c.depth ? '└ ' : '' %><a href="/admin/categories/<%= c.id %>/edit"><strong><%= c.name %></strong></a></td>
-          <td class="muted"><%= c.slug %></td>
-          <td><%= c.sort_order %></td>
-          <td><%= c.show_home ? '✅' : '' %></td>
-          <td><%= counts[c.id] || 0 %></td>
+          <td><% if (c.image) { %><img class="thumb" src="<%= c.image %>" alt="" loading="lazy"><% } %></td>
+          <td style="padding-left:<%= 14 + c.depth*24 %>px"><%= c.depth ? '└ ' : '' %><a href="/admin/categories/<%= c.id %>/edit"><b><%= c.name %></b></a></td>
+          <td class="muted small"><%= c.slug %></td>
+          <td class="num"><%= c.sort_order %></td>
+          <td><% if (c.show_menu) { %><span class="badge tone-green">Hiện</span><% } else { %><span class="badge tone-gray">Ẩn</span><% } %></td>
+          <td><% if (c.show_home) { %><span class="badge tone-green">Hiện</span><% } else { %><span class="muted">—</span><% } %></td>
+          <td class="num"><%= counts[c.id] || 0 %></td>
           <td class="actions">
-            <a class="btn btn-sm btn-gray" href="/admin/categories/<%= c.id %>/edit">Sửa</a>
-            <form method="post" action="/admin/categories/<%= c.id %>/delete" data-confirm="Xóa danh mục '<%= c.name %>'?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-danger">Xóa</button></form>
+            <a class="btn btn-sm btn-gray" href="/admin/categories/<%= c.id %>/edit"><%- icon('edit') %>Sửa</a>
+            <form method="post" action="/admin/categories/<%= c.id %>/delete" data-confirm="Xóa danh mục '<%= c.name %>'?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-ghost danger" title="Xóa" aria-label="Xóa"><%- icon('trash') %></button></form>
           </td>
         </tr>
       <% }) %>
+      <% if (!cats.length) { %><tr><td colspan="8" class="empty"><%- icon('folder') %>Chưa có danh mục.</td></tr><% } %>
     </tbody>
   </table>
   </div>

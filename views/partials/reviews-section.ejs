@@ -1,0 +1,33 @@
+<%# Khối đánh giá khách hàng: dùng ở trang chủ và trang sản phẩm. Cần: reviews, heading; tùy chọn: summary {avg, count}, showProduct %>
+<% if (reviews && reviews.length) { %>
+<section class="section reviews<%= typeof inContainer !== 'undefined' && inContainer ? '' : ' container' %>" id="danh-gia" aria-label="<%= heading %>">
+  <div class="section-head">
+    <h2><%= heading %></h2>
+    <% if (reviews.length > 2) { %><span class="swipe-hint" aria-hidden="true">Vuốt để xem thêm →</span><% } %>
+    <% if (typeof summary !== 'undefined' && summary) { %>
+      <span class="rv-summary"><span class="stars"><%= '★'.repeat(Math.round(summary.avg)) %><span class="off"><%= '★'.repeat(5 - Math.round(summary.avg)) %></span></span>
+        <b><%= summary.avg.toFixed(1).replace('.', ',') %>/5</b> · <%= summary.count %> đánh giá</span>
+    <% } %>
+  </div>
+  <div class="carousel">
+    <button class="car-btn prev" aria-label="Đánh giá trước">‹</button>
+    <div class="car-track rv-track">
+      <% reviews.forEach(function (r) { %>
+        <figure class="rv-card">
+          <% if (r.image) { %><img class="rv-photo" src="<%= r.image %>" alt="Ảnh khách hàng <%= r.name %> gửi" loading="lazy" decoding="async" width="400" height="260"><% } %>
+          <div class="rv-body">
+            <span class="stars" role="img" aria-label="<%= r.rating %> trên 5 sao"><%= '★'.repeat(r.rating) %><span class="off"><%= '★'.repeat(5 - r.rating) %></span></span>
+            <blockquote class="rv-text"><%- richText(r.content) %></blockquote>
+            <figcaption class="rv-who">
+              <span class="rv-avatar" aria-hidden="true"><%= r.name.trim().split(/\s+/).pop()[0] %></span>
+              <span><b><%= r.name %></b><% if (r.location) { %><small><%= r.location %></small><% } %>
+                <% if (typeof showProduct !== 'undefined' && showProduct && r.product_slug) { %><a class="rv-product" href="/san-pham/<%= r.product_slug %>">Đã mua: <%= r.product_name %></a><% } %></span>
+            </figcaption>
+          </div>
+        </figure>
+      <% }) %>
+    </div>
+    <button class="car-btn next" aria-label="Đánh giá sau">›</button>
+  </div>
+</section>
+<% } %>

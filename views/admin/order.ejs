@@ -1,40 +1,53 @@
 <%- include('_head') %>
+<% const st = ORDER_STATUSES[o.status] || { label: o.status, tone: 'gray' }; %>
 <div class="form-grid">
   <div class="col-main">
-    <div class="card">
-      <h3>Sản phẩm</h3>
+    <div class="card flush">
+      <div class="card-head"><h3>Sản phẩm đã đặt</h3><span class="badge tone-<%= st.tone %>"><%= st.label %></span></div>
+      <div class="table-wrap" style="margin-top:14px">
       <table class="table">
-        <thead><tr><th>Sản phẩm</th><th>Kích thước</th><th>Đơn giá</th><th>SL</th><th>Thành tiền</th></tr></thead>
+        <thead><tr><th>Sản phẩm</th><th>Kích thước</th><th class="num">Đơn giá</th><th class="num">SL</th><th class="num">Thành tiền</th></tr></thead>
         <tbody>
-          <% o.items.forEach(function(i){ %>
-            <tr><td><%= i.name %> <span class="muted"><%= i.code %></span></td><td><%= i.variant || '—' %></td><td><%= formatPrice(i.price) %></td><td><%= i.qty %></td><td><%= formatPrice(i.price * i.qty) %></td></tr>
+          <% o.items.forEach(function (i) { %>
+            <tr><td><b><%= i.name %></b> <span class="muted small"><%= i.code %></span></td><td><%= i.variant || '—' %></td><td class="num"><%= formatPrice(i.price) %></td><td class="num"><%= i.qty %></td><td class="num"><b><%= formatPrice(i.price * i.qty) %></b></td></tr>
           <% }) %>
-          <tr><td colspan="4" style="text-align:right"><strong>Tổng cộng</strong></td><td><strong><%= formatPrice(o.total) %></strong></td></tr>
         </tbody>
       </table>
+      </div>
+      <div class="card-foot" style="display:flex;justify-content:space-between;align-items:center"><span class="muted">Tổng cộng</span><b style="font-size:18px"><%= formatPrice(o.total) %></b></div>
     </div>
   </div>
   <div class="col-side">
     <div class="card">
       <h3>Khách hàng</h3>
-      <p><strong><%= o.customer_name %></strong><br>
-        📞 <a href="tel:<%= o.phone %>"><%= o.phone %></a><br>
-        <% if (o.email) { %>✉ <%= o.email %><br><% } %>
-        <% if (o.address) { %>📍 <%= o.address %><br><% } %>
-        🕒 <%= o.created_at %></p>
+      <div class="person" style="margin-bottom:12px"><span class="avatar"><%= (o.customer_name || '?').trim().split(/\s+/).pop()[0] %></span><b><%= o.customer_name %></b></div>
+      <div class="kv">
+        <div><%- icon('phone') %><a href="tel:<%= String(o.phone).replace(/[^0-9+]/g, '') %>"><b><%= o.phone %></b></a></div>
+        <% if (o.email) { %><div><%- icon('mail') %><a href="mailto:<%= o.email %>"><%= o.email %></a></div><% } %>
+        <% if (o.address) { %><div><%- icon('pin') %><span><%= o.address %></span></div><% } %>
+        <div><%- icon('clock') %><span><%= fmtDate(o.created_at) %> <span class="muted">(<%= timeAgo(o.created_at) %>)</span></span></div>
+      </div>
       <% if (o.note) { %><p class="note"><%= o.note %></p><% } %>
+      <div class="btn-row" style="margin-bottom:6px">
+        <a class="btn btn-sm btn-gray" href="tel:<%= String(o.phone).replace(/[^0-9+]/g, '') %>"><%- icon('phone') %>Gọi</a>
+        <% if (zaloLink(o.phone)) { %><a class="btn btn-sm btn-zalo" href="<%= zaloLink(o.phone) %>" target="_blank" rel="noopener">Nhắn Zalo</a><% } %>
+      </div>
+    </div>
+    <div class="card">
       <% if (isAdmin) { %>
       <form method="post">
         <input type="hidden" name="_csrf" value="<%= csrf %>">
-        <label>Trạng thái
-          <select name="status"><% Object.keys(STATUSES).forEach(function(k){ %><option value="<%= k %>" <%= o.status===k?'selected':'' %>><%= STATUSES[k] %></option><% }) %></select>
+        <label><span style="display:block;margin-bottom:8px">Trạng thái đơn</span>
+          <select name="status" class="status-select tone-<%= st.tone %>">
+            <% Object.keys(ORDER_STATUSES).forEach(function (k) { %><option value="<%= k %>" data-tone="<%= ORDER_STATUSES[k].tone %>" <%= o.status === k ? 'selected' : '' %>><%= ORDER_STATUSES[k].label %></option><% }) %>
+          </select>
         </label>
-        <button class="btn full">Cập nhật</button>
+        <button class="btn full"><%- icon('check') %>Cập nhật trạng thái</button>
       </form>
       <% } else { %>
-      <p>Trạng thái: <span class="status s-<%= o.status %>"><%= STATUSES[o.status] || o.status %></span></p>
+      <p style="margin:0 0 6px">Trạng thái: <span class="badge tone-<%= st.tone %>"><%= st.label %></span></p>
       <% } %>
-      <a class="btn btn-gray full" href="/admin/orders">← Danh sách đơn</a>
+      <a class="btn btn-gray full" href="/admin/orders"><%- icon('back') %>Danh sách đơn</a>
     </div>
   </div>
 </div>

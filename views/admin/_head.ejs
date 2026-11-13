@@ -3,35 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex">
+<meta name="robots" content="noindex, nofollow">
 <title><%= title %> - Quản trị</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="<%= asset('/css/admin.css') %>">
+<% if (settings.favicon) { %><link rel="icon" href="<%= settings.favicon %>"><% } %>
 </head>
 <body>
-<aside class="sidebar">
-  <a class="brand" href="/admin"><%= settings.site_name %><small>Quản trị</small></a>
-  <nav>
+<%
+  const _initials = String(settings.site_name || 'Admin').trim().split(/\s+/).slice(0, 2).map(function (w) { return w[0]; }).join('').toUpperCase();
+  const _nav = function (href, ic, label, match, badge) {
+    const on = match === '' ? currentPath === '/' : currentPath.startsWith(match);
+    return '<a class="nav-link' + (on ? ' active' : '') + '" href="' + href + '"' + (on ? ' aria-current="page"' : '') + '>' + icon(ic) + '<span>' + label + '</span>'
+      + (badge ? '<span class="nav-badge" title="' + badge + ' mục mới">' + (badge > 99 ? '99+' : badge) + '</span>' : '') + '</a>';
+  };
+%>
+<aside class="sidebar" id="sidebar">
+  <a class="brand" href="/admin"><span class="brand-mark"><%= _initials %></span><span><b><%= settings.site_name %></b><small>Trang quản trị</small></span></a>
+  <nav aria-label="Menu quản trị">
+    <div class="nav-group">Bán hàng</div>
+    <% if (isAdmin) { %><%- _nav('/admin', 'dashboard', 'Tổng quan', '') %><% } %>
+    <%- _nav('/admin/orders', 'bag', 'Đơn hàng', '/orders', navCount.orders) %>
     <% if (isAdmin) { %>
-    <a href="/admin" class="<%= currentPath === '/' ? 'active' : '' %>">📊 Tổng quan</a>
-    <a href="/admin/products" class="<%= currentPath.startsWith('/products') ? 'active' : '' %>">🖼️ Sản phẩm</a>
-    <a href="/admin/categories" class="<%= currentPath.startsWith('/categories') ? 'active' : '' %>">📁 Danh mục</a>
+    <%- _nav('/admin/leads', 'gift', 'Đăng ký ưu đãi', '/leads', navCount.leads) %>
+    <div class="nav-group">Sản phẩm</div>
+    <%- _nav('/admin/products', 'image', 'Sản phẩm', '/products') %>
+    <%- _nav('/admin/categories', 'folder', 'Danh mục', '/categories') %>
+    <div class="nav-group">Nội dung</div>
+    <%- _nav('/admin/pages', 'file', 'Trang nội dung', '/pages') %>
+    <%- _nav('/admin/reviews', 'star', 'Đánh giá khách hàng', '/reviews') %>
+    <%- _nav('/admin/branding', 'palette', 'Logo & Banner', '/branding') %>
+    <div class="nav-group">Hệ thống</div>
+    <%- _nav('/admin/settings', 'sliders', 'Cài đặt website', '/settings') %>
+    <%- _nav('/admin/mail', 'mail', 'Cấu hình email', '/mail') %>
+    <%- _nav('/admin/code', 'code', 'Mã Header / Footer', '/code') %>
+    <%- _nav('/admin/users', 'users', 'Người dùng', '/users') %>
     <% } %>
-    <a href="/admin/orders" class="<%= currentPath.startsWith('/orders') ? 'active' : '' %>">🧾 Đơn hàng</a>
-    <% if (isAdmin) { %>
-    <a href="/admin/leads" class="<%= currentPath.startsWith('/leads') ? 'active' : '' %>">🎁 Đăng ký ưu đãi</a>
-    <a href="/admin/pages" class="<%= currentPath.startsWith('/pages') ? 'active' : '' %>">📄 Trang nội dung</a>
-    <a href="/admin/branding" class="<%= currentPath.startsWith('/branding') ? 'active' : '' %>">🎨 Logo &amp; Banner</a>
-    <a href="/admin/settings" class="<%= currentPath.startsWith('/settings') ? 'active' : '' %>">⚙️ Cài đặt website</a>
-    <a href="/admin/mail" class="<%= currentPath.startsWith('/mail') ? 'active' : '' %>">✉️ Cấu hình email</a>
-    <a href="/admin/code" class="<%= currentPath.startsWith('/code') ? 'active' : '' %>">&lt;/&gt; Mã Header / Footer</a>
-    <a href="/admin/users" class="<%= currentPath.startsWith('/users') ? 'active' : '' %>">👥 Người dùng</a>
-    <% } %>
-    <a href="/admin/account" class="<%= currentPath.startsWith('/account') ? 'active' : '' %>">👤 Tài khoản (<%= user.username %>)</a>
-    <a href="/" target="_blank">↗ Xem website</a>
-    <a href="/admin/logout">⎋ Đăng xuất</a>
   </nav>
+  <div class="side-foot">
+    <div class="user-chip">
+      <a href="/admin/account" class="avatar" title="Tài khoản"><%= (user.name || user.username).trim()[0] %></a>
+      <a href="/admin/account" style="min-width:0"><b><%= user.name || user.username %></b><small>@<%= user.username %> · <%= isAdmin ? 'Toàn quyền' : 'Chỉ xem đơn' %></small></a>
+      <a class="logout" href="/admin/logout" title="Đăng xuất" aria-label="Đăng xuất"><%- icon('logout') %></a>
+    </div>
+  </div>
 </aside>
+<div class="scrim" id="scrim"></div>
 <div class="main">
-  <header class="topbar"><h1><%= title %></h1></header>
+  <header class="topbar">
+    <button class="menu-btn" id="menuBtn" aria-label="Mở menu" aria-controls="sidebar" aria-expanded="false"><%- icon('menu') %></button>
+    <h1><%= title %></h1>
+    <span class="spacer"></span>
+    <a class="top-link" href="/" target="_blank" rel="noopener"><%- icon('external') %><span>Xem website</span></a>
+  </header>
   <div class="content">
-  <% if (flash) { %><div class="alert alert-<%= flash.type %>"><%= flash.msg %></div><% } %>
+  <% if (flash) { %><div class="alert alert-<%= flash.type %> fade"><%- icon(flash.type === 'success' ? 'check' : 'alert') %><span><%= flash.msg %></span></div><% } %>

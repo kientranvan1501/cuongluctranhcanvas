@@ -8,15 +8,17 @@
   </div>
   <label>Danh mục cha
     <select name="parent_id">
-      <option value="">-- Không (danh mục gốc, hiện trên menu) --</option>
+      <option value="">-- Không (danh mục gốc, cấp 1 trên menu) --</option>
       <% cats.forEach(function(x){ %><option value="<%= x.id %>" <%= c.parent_id===x.id?'selected':'' %>><%= '— '.repeat(x.depth) %><%= x.name %></option><% }) %>
     </select>
   </label>
   <% if (c.image) { %><img class="thumb lg" src="<%= c.image %>" alt=""><% } %>
   <label>Ảnh đại diện (URL)<input name="image" value="<%= c.image || '' %>"></label>
   <label>hoặc tải ảnh lên<input type="file" name="upload" accept="image/*"></label>
-  <label>Mô tả (hiện cuối trang danh mục, hỗ trợ HTML)<textarea name="description" rows="5" class="code"><%= c.description || '' %></textarea></label>
+  <label>Mô tả (hiện cuối trang danh mục)<textarea name="description" rows="6"><%= htmlToText(c.description) %></textarea></label>
+  <p class="muted small field-hint">Enter = xuống dòng · bỏ trống 1 dòng = đoạn mới · <b>- </b> đầu dòng = gạch đầu dòng · <b>## </b> đầu dòng = tiêu đề · <b>**chữ**</b> = in đậm · <b>[chữ](https://…)</b> = liên kết · <b>&gt; </b> đầu dòng = khung nổi bật. Số điện thoại, email, link https:// tự thành liên kết.</p>
+  <label class="check"><input type="checkbox" name="show_menu" <%= c.show_menu !== 0 ? 'checked' : '' %>> Hiện trên menu header <span class="muted small">(bỏ tick thì ẩn khỏi menu cùng các mục con; trang danh mục và sản phẩm vẫn giữ nguyên)</span></label>
   <label class="check"><input type="checkbox" name="show_home" <%= c.show_home ? 'checked' : '' %>> Hiện ở mục "Bộ Sưu Tập" trang chủ</label>
-  <div class="btn-row"><button class="btn">💾 Lưu</button><a class="btn btn-gray" href="/admin/categories">Hủy</a></div>
+  <div class="btn-row"><button class="btn"><%- icon('check') %>Lưu</button><a class="btn btn-gray" href="/admin/categories">Hủy</a></div>
 </form>
 <%- include('_foot') %>
