@@ -332,4 +332,31 @@ for (const r of db.prepare("SELECT id, sale_price, variants FROM products WHERE 
   db.prepare('UPDATE products SET variants = ? WHERE id = ?').run(JSON.stringify(vs), r.id);
 }
 
+// ---------- Nút liên hệ nổi (Zalo, Gọi, Messenger…) — quản lý ở Quản trị → Nút liên hệ ----------
+db.exec(`CREATE TABLE IF NOT EXISTS contact_buttons (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  label TEXT NOT NULL,
+  link TEXT NOT NULL,
+  icon TEXT DEFAULT '',
+  color TEXT DEFAULT '#2196f3',
+  icon_full INTEGER DEFAULT 0,
+  effect TEXT DEFAULT 'wave',
+  show_on TEXT DEFAULT 'all',
+  new_tab INTEGER DEFAULT 1,
+  sort_order INTEGER DEFAULT 0,
+  active INTEGER DEFAULT 1
+)`);
+// Lần đầu: chuyển 2 nút Zalo + Gọi đang có sẵn (lấy theo cài đặt hotline/zalo) vào bảng để quản lý được
+if (!getSettings().cb_seeded) {
+  const s = getSettings(), tel = String(s.hotline || '').replace(/\D/g, ''), z = String(s.zalo || '').trim();
+  const zalo = /^https?:\/\//.test(z) ? z : (z && z !== '#' ? 'https://zalo.me/' + z.replace(/\D/g, '') : (tel ? 'https://zalo.me/' + tel : ''));
+  const ins = db.prepare('INSERT INTO contact_buttons(label, link, icon, color, effect, new_tab, sort_order) VALUES(?,?,?,?,?,?,?)');
+  if (!db.prepare('SELECT COUNT(*) c FROM contact_buttons').get().c) {
+    if (zalo) ins.run('Chat Zalo', zalo, '/img/contact/zalo.svg', '#2196f3', 'wave', 1, 1);
+    if (tel) ins.run('Gọi ' + (s.hotline || tel), 'tel:' + tel, '/img/contact/phone.svg', '#e50000', 'ring', 0, 2);
+  }
+  setSetting('cb_seeded', '1');
+  if (!s.cb_position) setSetting('cb_position', 'bottom-right');
+}
+
 module.exports = { db, sessionSecret, slugify, uniqueSlug, hashPassword, verifyPassword, getSettings, setSetting, parseProduct, smallImage, imageSrcset };

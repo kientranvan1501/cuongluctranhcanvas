@@ -1,0 +1,79 @@
+<%- include('_head') %>
+<form method="post" enctype="multipart/form-data" action="/admin/contact-buttons<%= b.id ? '/' + b.id : '' %>" class="form-grid" id="cbForm">
+  <input type="hidden" name="_csrf" value="<%= csrf %>">
+  <input type="hidden" name="icon" value="<%= b.icon || '' %>">
+  <div class="col-main">
+    <div class="card">
+      <div class="row">
+        <label>Tên nút *<input name="label" id="cbLabel" value="<%= b.label || '' %>" required maxlength="60" placeholder="VD: Chat Zalo"></label>
+        <label>Link *<input name="link" value="<%= b.link || '' %>" required placeholder="VD: https://zalo.me/0977772899"></label>
+      </div>
+      <p class="muted small field-hint">Tên nút hiện khi rê chuột vào nút. Link có thể là: số điện thoại (tự thành nút gọi), email, hoặc link https:// (Zalo: https://zalo.me/số, Messenger: https://m.me/tên-trang).</p>
+    </div>
+
+    <div class="card">
+      <h3>Icon</h3>
+      <div class="cb-icons">
+        <% var isPreset = CB_PRESETS.some(function (p) { return p.icon === b.icon; }); %>
+        <% CB_PRESETS.forEach(function (p) { %>
+          <label class="cb-icon" title="<%= p.name %>">
+            <input type="radio" name="icon_choice" value="<%= p.icon %>" data-color="<%= p.color %>" <%= b.icon === p.icon ? 'checked' : '' %>>
+            <span class="cb-dot" style="--bg: <%= p.color %>"><img src="<%= p.icon %>" alt=""></span><small><%= p.name %></small>
+          </label>
+        <% }) %>
+        <% if (b.icon && !isPreset) { %>
+          <label class="cb-icon" title="Ảnh đã tải lên">
+            <input type="radio" name="icon_choice" value="<%= b.icon %>" checked>
+            <span class="cb-dot<%= b.icon_full ? ' full' : '' %>" style="--bg: <%= b.color %>"><img src="<%= b.icon %>" alt=""></span><small>Ảnh của bạn</small>
+          </label>
+        <% } %>
+        <label class="cb-icon" title="Không dùng icon (hiện 2 chữ đầu của tên)">
+          <input type="radio" name="icon_choice" value="none" <%= !b.icon ? 'checked' : '' %>>
+          <span class="cb-dot" style="--bg: #9a9a9a">Aa</span><small>Không icon</small>
+        </label>
+      </div>
+      <label style="margin-top:14px">Hoặc tải ảnh icon của bạn (PNG / SVG / JPG, nên là ảnh vuông)<input type="file" name="upload" id="cbUpload" accept="image/*"></label>
+      <label class="check"><input type="checkbox" name="icon_full" id="cbFull" <%= b.icon_full ? 'checked' : '' %>> Ảnh phủ kín cả nút (dùng cho logo tròn có sẵn màu, ví dụ logo Zalo màu xanh) — bỏ tick thì ảnh nằm giữa nền màu</label>
+    </div>
+  </div>
+
+  <div class="col-side">
+    <div class="card">
+      <h3>Xem trước</h3>
+      <div class="cb-preview"><a class="cb-prev-btn" id="cbPrev" style="--bg: <%= b.color %>"></a></div>
+      <label>Màu nền nút<span class="cb-color"><input type="color" name="color" id="cbColor" value="<%= b.color || '#2196f3' %>"><code id="cbColorTxt"><%= b.color %></code></span></label>
+      <label>Hiệu ứng
+        <select name="effect"><% Object.keys(CB_EFFECTS).forEach(function (k) { %><option value="<%= k %>" <%= b.effect === k ? 'selected' : '' %>><%= CB_EFFECTS[k] %></option><% }) %></select></label>
+      <label>Hiện trên
+        <select name="show_on"><% Object.keys(CB_SHOW).forEach(function (k) { %><option value="<%= k %>" <%= b.show_on === k ? 'selected' : '' %>><%= CB_SHOW[k] %></option><% }) %></select></label>
+      <label>Thứ tự (số nhỏ ở trên)<input name="sort_order" type="number" value="<%= b.sort_order || 0 %>"></label>
+      <label class="check"><input type="checkbox" name="new_tab" <%= b.new_tab ? 'checked' : '' %>> Mở link ở tab mới</label>
+      <label class="check"><input type="checkbox" name="active" <%= b.active ? 'checked' : '' %>> Hiển thị trên web</label>
+      <button class="btn full"><%- icon('check') %>Lưu nút</button>
+      <a class="btn btn-gray full" href="/admin/contact-buttons">← Quay lại</a>
+    </div>
+  </div>
+</form>
+<script>
+(function () {
+  var f = document.getElementById('cbForm'), prev = document.getElementById('cbPrev'), color = document.getElementById('cbColor');
+  var full = document.getElementById('cbFull'), up = document.getElementById('cbUpload'), label = document.getElementById('cbLabel');
+  var uploadUrl = '';
+  function render() {
+    var c = f.querySelector('input[name="icon_choice"]:checked'), src = uploadUrl || (c && c.value !== 'none' ? c.value : '');
+    prev.style.setProperty('--bg', color.value);
+    prev.classList.toggle('full', !!src && full.checked);
+    prev.innerHTML = src ? '<img src="' + src + '" alt="">' : '<span>' + (label.value || 'Aa').slice(0, 2) + '</span>';
+    document.getElementById('cbColorTxt').textContent = color.value;
+  }
+  f.addEventListener('change', function (e) {
+    // chọn icon có sẵn -> gợi ý luôn màu chuẩn của icon đó, bỏ ảnh vừa chọn tải lên
+    if (e.target.name === 'icon_choice') { uploadUrl = ''; up.value = ''; if (e.target.dataset.color) color.value = e.target.dataset.color; full.checked = false; }
+    render();
+  });
+  color.addEventListener('input', render); label.addEventListener('input', render);
+  up.addEventListener('change', function () { uploadUrl = up.files[0] ? URL.createObjectURL(up.files[0]) : ''; render(); });
+  render();
+})();
+</script>
+<%- include('_foot') %>

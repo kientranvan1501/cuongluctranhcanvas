@@ -191,20 +191,6 @@ img { max-width: 100%; display: block; }
 .copyright { border-top: 1px solid #2a2a2a; margin-top: 36px; padding: 18px; text-align: center; font-size: 13px; }
 
 /* Nút liên hệ nổi: tròn đặc + viền sáng mờ bao quanh + sóng lan */
-.float-btns { position: fixed; right: 22px; bottom: 22px; display: flex; flex-direction: column; gap: 26px; z-index: 60; }
-.fb-btn { --c: 0, 104, 255; position: relative; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  background: rgb(var(--c)); box-shadow: 0 0 0 7px rgba(var(--c), .3), 0 6px 16px rgba(0,0,0,.18); transition: transform .2s; }
-.fb-btn::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: rgba(var(--c), .35); z-index: -1; animation: fb-wave 2s ease-out infinite; }
-.fb-btn:hover { transform: scale(1.08); }
-.fb-btn svg { display: block; }
-.fb-zalo { --c: 33, 150, 243; }
-.fb-zalo::after { animation-delay: 1s; }
-.fb-phone { --c: 229, 0, 0; }
-.fb-phone svg { animation: fb-ring 1.6s ease-in-out infinite; }
-@keyframes fb-wave { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(1.7); opacity: 0; } }
-@keyframes fb-ring { 0%, 50%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(-14deg); } 20%, 40% { transform: rotate(14deg); } }
-@media (prefers-reduced-motion: reduce) { .fb-btn::after, .fb-phone svg { animation: none; } }
-@media (max-width: 720px) { .float-btns { right: 16px; bottom: 16px; gap: 22px; } .fb-btn { width: 50px; height: 50px; } }
 
 /* Responsive */
 @media (min-width: 1025px) and (max-width: 1240px) {
@@ -462,3 +448,34 @@ html, body { overflow-x: clip; } /* lưới an toàn: không cho trang bị kéo
 .toast-ic { width: 24px; height: 24px; border-radius: 50%; background: #1e7a3c; color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 13px; flex: 0 0 auto; }
 .toast-err { border-left-color: var(--sale); }
 .toast-err .toast-ic { background: var(--sale); }
+
+
+/* ---------- Nút liên hệ nổi (quản lý ở Quản trị → Nút liên hệ) ---------- */
+.float-btns { position: fixed; z-index: 60; display: flex; flex-direction: column; gap: 24px; }
+.float-btns.pos-bottom-right { right: 22px; bottom: 22px; }
+.float-btns.pos-bottom-left { left: 22px; bottom: 22px; }
+.float-btns.pos-middle-right { right: 18px; top: 50%; transform: translateY(-50%); }
+.float-btns.pos-middle-left { left: 18px; top: 50%; transform: translateY(-50%); }
+.fb-btn { position: relative; width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; background: var(--bg);
+  box-shadow: 0 0 0 7px color-mix(in srgb, var(--bg) 30%, transparent), 0 6px 16px rgba(0,0,0,.18); transition: transform .2s; }
+.fb-btn:hover { transform: scale(1.08); }
+.fb-btn img { width: 62%; height: 62%; object-fit: contain; display: block; }
+.fb-btn.icon-full { background: transparent; box-shadow: 0 6px 16px rgba(0,0,0,.18); overflow: visible; }
+.fb-btn.icon-full img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.fb-txt { color: #fff; font-weight: 700; font-size: 15px; text-transform: uppercase; }
+/* Hiệu ứng: wave = vòng lan tỏa, ring = rung như chuông + vòng lan, none = đứng yên */
+.fb-btn.fx-wave::after, .fb-btn.fx-ring::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: color-mix(in srgb, var(--bg) 35%, transparent); z-index: -1;
+  animation: fb-wave 2s ease-out infinite; animation-delay: calc(var(--d, 0) * .7s); }
+.fb-btn.icon-full.fx-wave::after, .fb-btn.icon-full.fx-ring::after { background: rgba(120,120,120,.25); }
+.fb-btn.fx-ring img { animation: fb-ring 1.6s ease-in-out infinite; }
+@keyframes fb-wave { 0% { transform: scale(1); opacity: .9; } 100% { transform: scale(1.7); opacity: 0; } }
+@keyframes fb-ring { 0%, 50%, 100% { transform: rotate(0); } 10%, 30% { transform: rotate(-14deg); } 20%, 40% { transform: rotate(14deg); } }
+@media (prefers-reduced-motion: reduce) { .fb-btn::after, .fb-btn img { animation: none !important; } }
+@media (max-width: 720px) {
+  .float-btns { gap: 20px; }
+  .float-btns.pos-bottom-right { right: 16px; bottom: 16px; } .float-btns.pos-bottom-left { left: 16px; bottom: 16px; }
+  .float-btns.pos-middle-right { right: 12px; } .float-btns.pos-middle-left { left: 12px; }
+  .fb-btn { width: 50px; height: 50px; }
+  .fb-btn.show-desktop { display: none; }
+}
+@media (min-width: 721px) { .fb-btn.show-mobile { display: none; } }

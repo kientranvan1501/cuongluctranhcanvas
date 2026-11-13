@@ -90,6 +90,7 @@ app.use((req, res, next) => {
   cats.forEach(c => (byParent[c.parent_id || 0] ||= []).push(c));
   const build = (pid) => (byParent[pid] || []).map(c => ({ ...c, children: build(c.id) }));
   res.locals.menu = build(0);
+  res.locals.contactButtons = db.prepare('SELECT * FROM contact_buttons WHERE active = 1 ORDER BY sort_order, id').all();
   res.locals.footerPages = db.prepare("SELECT title, slug FROM pages WHERE active = 1 AND footer_group = 'policy' ORDER BY id").all();
   next();
 });

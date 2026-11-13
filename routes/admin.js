@@ -410,6 +410,75 @@ router.post('/leads/:id/delete', (req, res) => {
 });
 
 // ---------- Trang nội dung (chính sách, liên hệ...) ----------
+// ---------- Nút liên hệ nổi ----------
+const CB_PRESETS = [ // icon có sẵn (trắng, đặt trên nền màu)
+  ['zalo', 'Zalo', '#2196f3'], ['phone', 'Điện thoại', '#e50000'], ['messenger', 'Messenger', '#0084ff'], ['facebook', 'Facebook', '#1877f2'],
+  ['tiktok', 'TikTok', '#111111'], ['youtube', 'YouTube', '#ff0000'], ['email', 'Email', '#ea4335'], ['map', 'Bản đồ', '#34a853'], ['chat', 'Chat', '#0084ff'],
+].map(([k, name, color]) => ({ key: k, name, color, icon: `/img/contact/${k}.svg` }));
+const CB_POSITIONS = { 'bottom-right': 'Góc dưới bên phải', 'bottom-left': 'Góc dưới bên trái', 'middle-right': 'Giữa cạnh phải', 'middle-left': 'Giữa cạnh trái' };
+const CB_EFFECTS = { wave: 'Vòng sóng lan tỏa', ring: 'Rung như chuông điện thoại', none: 'Đứng yên' };
+const CB_SHOW = { all: 'Máy tính và điện thoại', mobile: 'Chỉ điện thoại', desktop: 'Chỉ máy tính' };
+// Chuẩn hóa link: số điện thoại -> tel:, email -> mailto:, tên miền -> https://; chặn javascript: …
+function normLink(s) {
+  s = String(s || '').trim();
+  if (/^(https?:\/\/|tel:|mailto:|sms:)/i.test(s)) return s;
+  if (/^\+?[0-9 .()-]{8,20}$/.test(s)) return 'tel:' + s.replace(/[^0-9+]/g, '');
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s)) return 'mailto:' + s;
+  if (/^(www\.)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i.test(s)) return 'https://' + s;
+  return '';
+}
+const cbLocals = { CB_PRESETS, CB_POSITIONS, CB_EFFECTS, CB_SHOW };
+router.get('/contact-buttons', (req, res) => {
+  const buttons = db.prepare('SELECT * FROM contact_buttons ORDER BY sort_order, id').all();
+  res.render('admin/contact-buttons', { title: 'Nút liên hệ', buttons, position: getSettings().cb_position || 'bottom-right', ...cbLocals });
+});
+router.post('/contact-buttons/position', (req, res) => {
+  if (CB_POSITIONS[req.body.cb_position]) setSetting('cb_position', req.body.cb_position);
+  flash(req, 'success', 'Đã lưu vị trí nút liên hệ');
+  res.redirect('/admin/contact-buttons');
+});
+router.get('/contact-buttons/new', (req, res) =>
+  res.render('admin/contact-button-form', { title: 'Thêm nút liên hệ', b: { color: '#2196f3', effect: 'wave', show_on: 'all', new_tab: 1, active: 1, icon: '' }, ...cbLocals }));
+router.get('/contact-buttons/:id/edit', (req, res) => {
+  const b = db.prepare('SELECT * FROM contact_buttons WHERE id = ?').get(req.params.id);
+  if (!b) return res.redirect('/admin/contact-buttons');
+  res.render('admin/contact-button-form', { title: 'Sửa nút liên hệ', b, ...cbLocals });
+});
+function cbData(req) {
+  const b = req.body;
+  let icon = String(b.icon || '');
+  if (req.file) icon = '/uploads/' + req.file.filename;
+  else if (b.icon_choice === 'none') icon = '';
+  else if (CB_PRESETS.some(p => p.icon === b.icon_choice)) icon = b.icon_choice;
+  if (icon && !/^\/(img\/contact|uploads)\//.test(icon)) icon = '';
+  return {
+    label: String(b.label || '').trim().slice(0, 60), link: normLink(b.link), icon,
+    color: /^#[0-9a-f]{6}$/i.test(b.color || '') ? b.color : '#2196f3', icon_full: b.icon_full ? 1 : 0,
+    effect: CB_EFFECTS[b.effect] ? b.effect : 'wave', show_on: CB_SHOW[b.show_on] ? b.show_on : 'all',
+    new_tab: b.new_tab ? 1 : 0, sort_order: parseInt(b.sort_order) || 0, active: b.active ? 1 : 0,
+  };
+}
+function cbSave(req, res, id) {
+  const d = cbData(req), back = id ? `/admin/contact-buttons/${id}/edit` : '/admin/contact-buttons/new';
+  if (!d.label) { flash(req, 'error', 'Cần nhập tên nút'); return res.redirect(back); }
+  if (!d.link) { flash(req, 'error', 'Link chưa đúng. Nhập số điện thoại, email, hoặc link bắt đầu bằng https://'); return res.redirect(back); }
+  if (id) db.prepare(`UPDATE contact_buttons SET ${Object.keys(d).map(k => k + ' = ?').join(', ')} WHERE id = ?`).run(...Object.values(d), id);
+  else db.prepare(`INSERT INTO contact_buttons(${Object.keys(d).join(',')}) VALUES(${Object.keys(d).map(() => '?').join(',')})`).run(...Object.values(d));
+  flash(req, 'success', id ? 'Đã lưu nút liên hệ' : 'Đã thêm nút liên hệ');
+  res.redirect('/admin/contact-buttons');
+}
+router.post('/contact-buttons', upload.single('upload'), csrfCheck, (req, res) => cbSave(req, res, 0));
+router.post('/contact-buttons/:id', upload.single('upload'), csrfCheck, (req, res) => cbSave(req, res, +req.params.id));
+router.post('/contact-buttons/:id/toggle', (req, res) => {
+  db.prepare('UPDATE contact_buttons SET active = 1 - active WHERE id = ?').run(req.params.id);
+  res.redirect('/admin/contact-buttons');
+});
+router.post('/contact-buttons/:id/delete', (req, res) => {
+  db.prepare('DELETE FROM contact_buttons WHERE id = ?').run(req.params.id);
+  flash(req, 'success', 'Đã xóa nút liên hệ');
+  res.redirect('/admin/contact-buttons');
+});
+
 // ---------- Đánh giá khách hàng ----------
 const productOptions = () => db.prepare("SELECT id, name, code FROM products ORDER BY active DESC, name").all();
 router.get('/reviews', (req, res) => {

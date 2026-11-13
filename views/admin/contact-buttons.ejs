@@ -1,0 +1,49 @@
+<%- include('_head') %>
+<div class="card">
+  <div class="card-head" style="margin-bottom:6px"><h2 style="margin:0">Vị trí hiển thị trên web</h2></div>
+  <p class="muted small" style="margin:0 0 14px">Các nút nổi luôn hiện ở góc màn hình trên mọi trang. Chọn vị trí rồi bấm Lưu.</p>
+  <form method="post" action="/admin/contact-buttons/position">
+    <input type="hidden" name="_csrf" value="<%= csrf %>">
+    <div class="cb-pos-grid">
+      <% Object.keys(CB_POSITIONS).forEach(function (k) { %>
+        <label class="cb-pos">
+          <input type="radio" name="cb_position" value="<%= k %>" <%= position === k ? 'checked' : '' %>>
+          <span class="cb-screen pos-<%= k %>"><i></i><i></i></span>
+          <b><%= CB_POSITIONS[k] %></b>
+        </label>
+      <% }) %>
+    </div>
+    <button class="btn btn-sm" style="margin-top:14px"><%- icon('check') %>Lưu vị trí</button>
+  </form>
+</div>
+
+<div class="card flush">
+  <div class="card-head"><p class="muted">Nút trên cùng của danh sách hiện trên cùng trên web. Đổi thứ tự bằng ô <b>Thứ tự</b> trong trang sửa.</p><a class="btn btn-sm" href="/admin/contact-buttons/new"><%- icon('plus') %>Thêm nút</a></div>
+  <div class="table-wrap" style="margin-top:16px">
+  <table class="table stack">
+    <thead><tr><th>Nút</th><th>Link</th><th>Hiện trên</th><th class="num">Thứ tự</th><th>Trạng thái</th><th></th></tr></thead>
+    <tbody>
+      <% buttons.forEach(function (b) { %>
+        <tr>
+          <td><div class="person">
+            <span class="cb-dot<%= b.icon_full ? ' full' : '' %>" style="--bg: <%= b.color %>"><% if (b.icon) { %><img src="<%= b.icon %>" alt=""><% } else { %><%= b.label.slice(0, 2) %><% } %></span>
+            <div><a href="/admin/contact-buttons/<%= b.id %>/edit"><b><%= b.label %></b></a><small><%= CB_EFFECTS[b.effect] || '' %></small></div></div></td>
+          <td class="small"><a href="<%= b.link %>" target="_blank" rel="noopener" class="muted" style="word-break:break-all"><%= b.link %></a></td>
+          <td class="small"><%= CB_SHOW[b.show_on] || '' %></td>
+          <td class="num"><%= b.sort_order %></td>
+          <td>
+            <form method="post" action="/admin/contact-buttons/<%= b.id %>/toggle"><input type="hidden" name="_csrf" value="<%= csrf %>">
+              <button class="badge tone-<%= b.active ? 'green' : 'gray' %> badge-btn" title="Bấm để <%= b.active ? 'ẩn' : 'hiện' %>"><%= b.active ? 'Đang hiện' : 'Đang ẩn' %></button></form>
+          </td>
+          <td class="actions">
+            <a class="btn btn-sm btn-gray" href="/admin/contact-buttons/<%= b.id %>/edit"><%- icon('edit') %>Sửa</a>
+            <form method="post" action="/admin/contact-buttons/<%= b.id %>/delete" data-confirm="Xóa nút “<%= b.label %>”?"><input type="hidden" name="_csrf" value="<%= csrf %>"><button class="btn btn-sm btn-ghost danger" title="Xóa" aria-label="Xóa"><%- icon('trash') %></button></form>
+          </td>
+        </tr>
+      <% }) %>
+      <% if (!buttons.length) { %><tr><td colspan="6" class="empty"><%- icon('phone') %>Chưa có nút nào. Bấm “Thêm nút” để tạo nút Zalo, Gọi, Messenger…</td></tr><% } %>
+    </tbody>
+  </table>
+  </div>
+</div>
+<%- include('_foot') %>
