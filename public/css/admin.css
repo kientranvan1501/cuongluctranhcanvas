@@ -428,3 +428,29 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 .cb-screen.pos-middle-right i { right: 6px; top: 22px; } .cb-screen.pos-middle-right i + i { top: 36px; }
 .cb-screen.pos-middle-left i { left: 6px; top: 22px; } .cb-screen.pos-middle-left i + i { top: 36px; }
 .badge-btn { border: 0; cursor: pointer; font: inherit; }
+
+/* ---------- Gallery ảnh khách hàng ---------- */
+.gl-drop { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 16px; margin: 0; border: 2px dashed var(--line-2); border-radius: 12px; background: var(--soft); text-align: center; cursor: pointer; transition: border-color .15s, background .15s; }
+.gl-drop:hover, .gl-drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.gl-drop svg.i { width: 30px; height: 30px; color: var(--accent); }
+.gl-drop small { font-weight: 400; color: var(--muted); }
+.gl-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.gl-queue { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 16px; }
+.gl-q { position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+.gl-q img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.gl-q input { border: 0; border-top: 1px solid var(--line); border-radius: 0; font-size: 12.5px; padding: 8px; }
+.gl-x { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 17px; line-height: 1; cursor: pointer; }
+.gl-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.gl-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.gl-item { position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; transition: opacity .15s; }
+.gl-item.off .gl-img { opacity: .4; }
+.gl-item.off::after { content: 'Đang ẩn'; position: absolute; top: 8px; right: 8px; padding: 2px 8px; border-radius: 10px; background: #555; color: #fff; font-size: 11px; font-weight: 600; }
+.gl-img img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+.gl-sel { position: absolute; top: 8px; left: 8px; margin: 0; padding: 4px; border-radius: 6px; background: rgba(255,255,255,.92); line-height: 0; z-index: 1; }
+.gl-meta { padding: 8px; }
+.gl-meta > input { font-size: 12.5px; padding: 7px 8px; }
+.gl-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.gl-row label { margin: 0; display: flex; align-items: center; gap: 4px; font-size: 12.5px; font-weight: 500; color: var(--muted); }
+.gl-row input[type=number] { width: 62px; padding: 5px 6px; font-size: 12.5px; }
+.gl-row button { margin-left: auto; }

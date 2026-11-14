@@ -359,4 +359,18 @@ if (!getSettings().cb_seeded) {
   if (!s.cb_position) setSetting('cb_position', 'bottom-right');
 }
 
+// ---------- Gallery: ảnh feedback khách hàng gửi về (trang /gallery) ----------
+// image = ảnh lớn (tối đa ~2000px), thumb = ảnh nhỏ cho lưới; width/height để giữ khung, tránh nhảy trang khi tải
+db.exec(`CREATE TABLE IF NOT EXISTS gallery (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  image TEXT NOT NULL,
+  thumb TEXT DEFAULT '',
+  caption TEXT DEFAULT '',
+  width INTEGER DEFAULT 0,
+  height INTEGER DEFAULT 0,
+  sort_order INTEGER DEFAULT 0,
+  active INTEGER DEFAULT 1,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+
 module.exports = { db, sessionSecret, slugify, uniqueSlug, hashPassword, verifyPassword, getSettings, setSetting, parseProduct, smallImage, imageSrcset };

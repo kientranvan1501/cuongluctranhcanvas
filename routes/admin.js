@@ -525,6 +525,77 @@ router.post('/reviews/:id/delete', (req, res) => {
   res.redirect('/admin/reviews');
 });
 
+// ---------- Gallery (ảnh feedback khách hàng) ----------
+// Trình duyệt của admin tự thu nhỏ ảnh trước khi gửi (ảnh lớn ≤ 2000px + ảnh nhỏ 700px) nên không cần thư viện xử lý ảnh trên hosting.
+// Không có JS thì vẫn nhận ảnh gốc (field "upload"), khi đó ảnh nhỏ = ảnh gốc.
+const UPLOAD_DIR = path.join(__dirname, '..', 'public', 'uploads');
+const galleryUpload = multer({
+  storage: upload.storage,
+  limits: { fileSize: 15 * 1024 * 1024, files: 120 },
+  fileFilter: (req, file, cb) => cb(null, /\.(jpe?g|png|webp)$/i.test(file.originalname)),
+}).fields([{ name: 'full', maxCount: 60 }, { name: 'thumb', maxCount: 60 }, { name: 'upload', maxCount: 60 }]);
+const removeUpload = (p) => {
+  if (!/^\/uploads\/[\w.-]+$/.test(p || '')) return;
+  if (db.prepare('SELECT COUNT(*) c FROM gallery WHERE image = ? OR thumb = ?').get(p, p).c) return; // ảnh còn được dùng
+  require('fs').unlink(path.join(UPLOAD_DIR, path.basename(p)), () => {});
+};
+router.get('/gallery', (req, res) => {
+  const photos = db.prepare('SELECT * FROM gallery ORDER BY sort_order, id DESC').all();
+  res.render('admin/gallery', { title: 'Gallery ảnh khách hàng', photos });
+});
+router.post('/gallery/upload', (req, res, next) => galleryUpload(req, res, (err) => {
+  if (err) {
+    const msg = err.code === 'LIMIT_FILE_SIZE' ? 'Có ảnh lớn hơn 15MB' : 'Tải ảnh lỗi: ' + err.message;
+    return req.get('x-requested-with') === 'fetch' ? res.status(400).json({ ok: false, error: msg }) : (flash(req, 'error', msg), res.redirect('/admin/gallery'));
+  }
+  next();
+}), csrfCheck, (req, res) => {
+  const f = req.files || {}, full = f.full || [], thumb = f.thumb || [], raw = f.upload || [];
+  const arr = (v) => (Array.isArray(v) ? v : v == null ? [] : [v]);
+  const ws = arr(req.body.w), hs = arr(req.body.h), caps = arr(req.body.caption);
+  const ins = db.prepare('INSERT INTO gallery(image, thumb, caption, width, height, sort_order) VALUES(?,?,?,?,?,?)');
+  // ảnh mới nằm đầu danh sách (thứ tự nhỏ hơn mọi ảnh cũ), giữ đúng thứ tự đã chọn trong lần tải này
+  let order = Math.min(0, db.prepare('SELECT MIN(sort_order) m FROM gallery').get().m ?? 0) - (full.length + raw.length);
+  let n = 0;
+  full.forEach((x, i) => {
+    const t = thumb[i] ? '/uploads/' + thumb[i].filename : '/uploads/' + x.filename;
+    ins.run('/uploads/' + x.filename, t, String(caps[i] || '').trim().slice(0, 200), parseInt(ws[i]) || 0, parseInt(hs[i]) || 0, order++); n++;
+  });
+  thumb.slice(full.length).forEach(x => removeUpload('/uploads/' + x.filename)); // ảnh nhỏ thừa (không khớp ảnh lớn)
+  raw.forEach(x => { ins.run('/uploads/' + x.filename, '/uploads/' + x.filename, '', 0, 0, order++); n++; });
+  const msg = n ? `Đã tải lên ${n} ảnh` : 'Chưa có ảnh nào được tải lên (chỉ nhận JPG, PNG, WEBP)';
+  if (req.get('x-requested-with') === 'fetch') { flash(req, n ? 'success' : 'error', msg); return res.json({ ok: !!n, count: n }); }
+  flash(req, n ? 'success' : 'error', msg);
+  res.redirect('/admin/gallery');
+});
+// Một form chung: lưu chú thích / thứ tự / ẩn-hiện cho tất cả ảnh, hoặc thao tác hàng loạt với ảnh đã chọn
+router.post('/gallery', (req, res) => {
+  // khóa dạng cap[id12] (không dùng cap[12]: bộ đọc form biến khóa số thành mảng và dồn mất số id)
+  const b = req.body, ids = Object.keys(b.cap || {}).map(k => +String(k).replace(/^id/, '')).filter(Boolean);
+  const sel = (Array.isArray(b.sel) ? b.sel : b.sel ? [b.sel] : []).map(Number).filter(Boolean);
+  const delOne = parseInt(b.del) || 0;
+  const del = (id) => {
+    const r = db.prepare('SELECT * FROM gallery WHERE id = ?').get(id);
+    if (!r) return 0;
+    db.prepare('DELETE FROM gallery WHERE id = ?').run(id);
+    removeUpload(r.image); removeUpload(r.thumb);
+    return 1;
+  };
+  if (delOne) { del(delOne); flash(req, 'success', 'Đã xóa ảnh'); return res.redirect('/admin/gallery'); }
+  if (b.action === 'delete' || b.action === 'hide' || b.action === 'show') {
+    if (!sel.length) { flash(req, 'error', 'Chưa chọn ảnh nào'); return res.redirect('/admin/gallery'); }
+    let n = 0;
+    if (b.action === 'delete') sel.forEach(id => { n += del(id); });
+    else sel.forEach(id => { n += db.prepare('UPDATE gallery SET active = ? WHERE id = ?').run(b.action === 'show' ? 1 : 0, id).changes; });
+    flash(req, 'success', (b.action === 'delete' ? 'Đã xóa ' : b.action === 'show' ? 'Đã hiện ' : 'Đã ẩn ') + n + ' ảnh');
+    return res.redirect('/admin/gallery');
+  }
+  const up = db.prepare('UPDATE gallery SET caption = ?, sort_order = ?, active = ? WHERE id = ?');
+  ids.forEach(id => up.run(String(b.cap['id' + id] || '').trim().slice(0, 200), parseInt((b.sort || {})['id' + id]) || 0, (b.act || {})['id' + id] ? 1 : 0, id));
+  flash(req, 'success', 'Đã lưu thay đổi');
+  res.redirect('/admin/gallery');
+});
+
 router.get('/pages', (req, res) => res.render('admin/pages', { title: 'Trang nội dung', pages: db.prepare('SELECT * FROM pages ORDER BY id').all() }));
 router.get('/pages/new', (req, res) => res.render('admin/page-form', { title: 'Thêm trang', pg: { active: 1 } }));
 router.get('/pages/:id/edit', (req, res) => {

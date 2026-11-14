@@ -116,6 +116,23 @@ router.get('/collections', (req, res) => {
   res.render('collections', { title: 'Bộ Sưu Tập', cats });
 });
 
+// ---------- Gallery: ảnh feedback thực tế của khách (quản lý ở Quản trị → Gallery ảnh khách) ----------
+const GALLERY_PER_PAGE = 48;
+router.get('/gallery', (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const total = db.prepare('SELECT COUNT(*) c FROM gallery WHERE active = 1').get().c;
+  const pages = Math.max(1, Math.ceil(total / GALLERY_PER_PAGE));
+  if (page > pages) { res.locals.seo = { noindex: true, canonical: false }; return res.status(404).render('404', { title: 'Không tìm thấy trang' }); }
+  const photos = db.prepare('SELECT * FROM gallery WHERE active = 1 ORDER BY sort_order, id DESC LIMIT ? OFFSET ?').all(GALLERY_PER_PAGE, (page - 1) * GALLERY_PER_PAGE);
+  res.locals.seo = {
+    canonical: '/gallery' + (page > 1 ? '?page=' + page : ''),
+    description: `Hình ảnh thực tế khách hàng gửi về sau khi nhận và treo tranh canvas, tranh cường lực của ${res.locals.settings.site_name}.`,
+    image: photos[0] ? photos[0].image : undefined,
+    jsonld: [breadcrumbLd(res, [{ name: 'Trang chủ', url: '/' }, { name: 'Gallery', url: '/gallery' }])],
+  };
+  res.render('gallery', { title: page > 1 ? `Gallery ảnh khách hàng - Trang ${page}` : 'Gallery ảnh khách hàng', photos, page, pages, total });
+});
+
 router.get('/search', (req, res) => {
   const q = String(req.query.q || '').trim();
   // Trang kết quả tìm kiếm nội bộ không nên được Google index
@@ -200,6 +217,7 @@ router.get('/sitemap.xml', (req, res) => {
   const day = (d) => (d ? String(d).slice(0, 10) : '');
   const urls = [
     { loc: '/' }, { loc: '/shop' }, { loc: '/collections' }, { loc: '/best-sellers' }, { loc: '/bst-moi' },
+    { loc: '/gallery', images: db.prepare('SELECT image FROM gallery WHERE active = 1 ORDER BY sort_order, id DESC LIMIT 1000').all().map(r => r.image) },
     ...db.prepare('SELECT slug FROM categories ORDER BY sort_order').all().map(c => ({ loc: '/danh-muc/' + c.slug })),
     ...db.prepare('SELECT slug, updated_at, images FROM products WHERE active = 1 ORDER BY id DESC').all().map(p => {
       let imgs = []; try { imgs = JSON.parse(p.images || '[]'); } catch {}

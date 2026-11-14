@@ -272,4 +272,36 @@
       if (!load().length) { e.preventDefault(); alert('Giỏ hàng trống'); }
     });
   }
+  // ---- Gallery: bấm ảnh xem lớn, chuyển ảnh bằng nút ‹ ›, phím ← →, vuốt trên điện thoại
+  const gGrid = document.getElementById('galleryGrid'), gBox = document.getElementById('galleryBox');
+  if (gGrid && gBox) {
+    const items = [...gGrid.querySelectorAll('.gallery-item')];
+    const gImg = document.getElementById('gbImg'), gCap = document.getElementById('gbCap'), gCount = document.getElementById('gbCount');
+    let cur = 0;
+    const show = (i) => {
+      cur = (i + items.length) % items.length;
+      const a = items[cur];
+      gImg.src = a.getAttribute('href');
+      gImg.alt = a.querySelector('img').alt;
+      gCap.textContent = a.dataset.caption || '';
+      gCount.textContent = (cur + 1) + ' / ' + items.length;
+      const pre = items[(cur + 1) % items.length]; if (pre) new Image().src = pre.getAttribute('href'); // tải trước ảnh kế tiếp
+    };
+    items.forEach((a, i) => a.addEventListener('click', (e) => {
+      e.preventDefault(); show(i); document.body.classList.add('iv-open'); gBox.showModal();
+    }));
+    gBox.querySelector('.gb-prev').addEventListener('click', () => show(cur - 1));
+    gBox.querySelector('.gb-next').addEventListener('click', () => show(cur + 1));
+    gBox.querySelector('.gb-close').addEventListener('click', () => gBox.close());
+    gBox.addEventListener('click', (e) => { if (e.target === gBox || e.target.tagName === 'FIGURE') gBox.close(); }); // bấm nền tối để đóng
+    gBox.addEventListener('close', () => document.body.classList.remove('iv-open'));
+    gBox.addEventListener('keydown', (e) => { if (e.key === 'ArrowLeft') show(cur - 1); if (e.key === 'ArrowRight') show(cur + 1); });
+    let sx = null;
+    gBox.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+    gBox.addEventListener('touchend', (e) => {
+      if (sx === null) return; const dx = e.changedTouches[0].clientX - sx; sx = null;
+      if (Math.abs(dx) > 50) show(cur + (dx < 0 ? 1 : -1));
+    });
+    if (items.length < 2) gBox.querySelectorAll('.gb-nav').forEach((b) => { b.hidden = true; });
+  }
 })();

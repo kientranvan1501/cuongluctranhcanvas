@@ -479,3 +479,30 @@ html, body { overflow-x: clip; } /* lưới an toàn: không cho trang bị kéo
   .fb-btn.show-desktop { display: none; }
 }
 @media (min-width: 721px) { .fb-btn.show-mobile { display: none; } }
+
+/* ---------- Gallery ảnh khách hàng (/gallery) ---------- */
+.gallery-grid { columns: 4 260px; column-gap: 14px; }
+.gallery-item { display: block; margin: 0 0 14px; break-inside: avoid; border-radius: 6px; overflow: hidden; background: #f1ede6; cursor: zoom-in; }
+.gallery-item img { display: block; width: 100%; height: auto; transition: transform .35s ease, opacity .2s; }
+.gallery-item:hover img { transform: scale(1.03); }
+.gallery-box { width: 100vw; height: 100vh; max-width: 100vw; max-height: 100vh; margin: 0; padding: 0; border: 0; background: rgba(12,12,12,.95); color: #fff; }
+.gallery-box[open] { display: flex; align-items: center; justify-content: center; }
+.gallery-box::backdrop { background: rgba(12,12,12,.95); }
+.gallery-box figure { margin: 0; max-width: calc(100vw - 140px); text-align: center; }
+.gallery-box img { display: block; max-width: 100%; max-height: calc(100vh - 110px); margin: 0 auto; object-fit: contain; user-select: none; }
+.gallery-box figcaption { margin-top: 12px; font-size: 14px; color: #ddd; min-height: 1em; }
+.gb-close, .gb-nav { position: absolute; border: 0; background: rgba(255,255,255,.12); color: #fff; cursor: pointer; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+.gb-close:hover, .gb-nav:hover { background: rgba(255,255,255,.25); }
+.gb-close { top: 14px; right: 14px; width: 42px; height: 42px; font-size: 28px; line-height: 1; z-index: 2; }
+.gb-nav { top: 50%; transform: translateY(-50%); width: 48px; height: 48px; font-size: 34px; line-height: 1; padding-bottom: 4px; }
+.gb-prev { left: 16px; } .gb-next { right: 16px; }
+.gb-count { position: absolute; top: 24px; left: 20px; font-size: 13px; color: #bbb; }
+@media (max-width: 720px) {
+  .gallery-grid { columns: 2; column-gap: 8px; }
+  .gallery-item { margin-bottom: 8px; border-radius: 4px; }
+  .gallery-box figure { max-width: 100vw; }
+  .gallery-box img { max-height: calc(100vh - 90px); }
+  .gb-nav { top: auto; bottom: 14px; transform: none; width: 44px; height: 44px; }
+  .gb-prev { left: calc(50% - 56px); } .gb-next { right: calc(50% - 56px); }
+}
+.gb-nav[hidden] { display: none; }
